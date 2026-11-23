@@ -1,0 +1,618 @@
+[
+  {
+    "model": "Pretrained (no label smoothing)",
+    "file": "pretrain_nols.pt",
+    "reverse_exact (Step1 task)": 1.0,
+    "no_b_words_exact": 1.0,
+    "b_words_skip_exact": 0.0,
+    "b_words_char_acc": 0.3391304347826087,
+    "b_leak_rate": 1.0,
+    "invalid_rate": 0.0,
+    "step2_task_on_random_words": 0.8548148148148148,
+    "b_words_per_length": {
+      "2": 0.0,
+      "3": 0.0,
+      "4": 0.0,
+      "5": 0.0,
+      "6": 0.0
+    },
+    "examples": [
+      {
+        "input": "mb",
+        "target": "m",
+        "pred": "bm",
+        "correct": false
+      },
+      {
+        "input": "bk",
+        "target": "k",
+        "pred": "kb",
+        "correct": false
+      },
+      {
+        "input": "tb",
+        "target": "t",
+        "pred": "bt",
+        "correct": false
+      },
+      {
+        "input": "zb",
+        "target": "z",
+        "pred": "bz",
+        "correct": false
+      },
+      {
+        "input": "bj",
+        "target": "j",
+        "pred": "jb",
+        "correct": false
+      },
+      {
+        "input": "fb",
+        "target": "f",
+        "pred": "bf",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "model": "Pretrained (label smoothing 0.1)",
+    "file": "pretrain.pt",
+    "reverse_exact (Step1 task)": 1.0,
+    "no_b_words_exact": 1.0,
+    "b_words_skip_exact": 0.0,
+    "b_words_char_acc": 0.3391304347826087,
+    "b_leak_rate": 1.0,
+    "invalid_rate": 0.0,
+    "step2_task_on_random_words": 0.8548148148148148,
+    "b_words_per_length": {
+      "2": 0.0,
+      "3": 0.0,
+      "4": 0.0,
+      "5": 0.0,
+      "6": 0.0
+    },
+    "examples": [
+      {
+        "input": "mb",
+        "target": "m",
+        "pred": "bm",
+        "correct": false
+      },
+      {
+        "input": "bk",
+        "target": "k",
+        "pred": "kb",
+        "correct": false
+      },
+      {
+        "input": "tb",
+        "target": "t",
+        "pred": "bt",
+        "correct": false
+      },
+      {
+        "input": "zb",
+        "target": "z",
+        "pred": "bz",
+        "correct": false
+      },
+      {
+        "input": "bj",
+        "target": "j",
+        "pred": "jb",
+        "correct": false
+      },
+      {
+        "input": "fb",
+        "target": "f",
+        "pred": "bf",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "model": "GRPO - naive reward",
+    "file": "grpo_naive.pt",
+    "reverse_exact (Step1 task)": 0.25925925925925924,
+    "no_b_words_exact": 0.30329289428076256,
+    "b_words_skip_exact": 0.0869047619047619,
+    "b_words_char_acc": 0.21604938271604937,
+    "b_leak_rate": 0.0,
+    "invalid_rate": 0.0,
+    "step2_task_on_random_words": 0.2725925925925926,
+    "b_words_per_length": {
+      "2": 0.375,
+      "3": 0.17,
+      "4": 0.055,
+      "5": 0.045,
+      "6": 0.02
+    },
+    "examples": [
+      {
+        "input": "mb",
+        "target": "m",
+        "pred": "",
+        "correct": false
+      },
+      {
+        "input": "bk",
+        "target": "k",
+        "pred": "k",
+        "correct": true
+      },
+      {
+        "input": "tb",
+        "target": "t",
+        "pred": "",
+        "correct": false
+      },
+      {
+        "input": "zb",
+        "target": "z",
+        "pred": "",
+        "correct": false
+      },
+      {
+        "input": "bj",
+        "target": "j",
+        "pred": "j",
+        "correct": true
+      },
+      {
+        "input": "fb",
+        "target": "f",
+        "pred": "",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "model": "GRPO - similarity reward",
+    "file": "grpo_similarity.pt",
+    "reverse_exact (Step1 task)": 0.8318518518518518,
+    "no_b_words_exact": 0.9731369150779896,
+    "b_words_skip_exact": 0.1988095238095238,
+    "b_words_char_acc": 0.4307462686567164,
+    "b_leak_rate": 0.0,
+    "invalid_rate": 0.002380952380952381,
+    "step2_task_on_random_words": 0.8607407407407407,
+    "b_words_per_length": {
+      "2": 0.45,
+      "3": 0.26,
+      "4": 0.235,
+      "5": 0.115,
+      "6": 0.135
+    },
+    "examples": [
+      {
+        "input": "mb",
+        "target": "m",
+        "pred": "mm",
+        "correct": false
+      },
+      {
+        "input": "bk",
+        "target": "k",
+        "pred": "k",
+        "correct": true
+      },
+      {
+        "input": "tb",
+        "target": "t",
+        "pred": "tt",
+        "correct": false
+      },
+      {
+        "input": "zb",
+        "target": "z",
+        "pred": "az",
+        "correct": false
+      },
+      {
+        "input": "bj",
+        "target": "j",
+        "pred": "j",
+        "correct": true
+      },
+      {
+        "input": "fb",
+        "target": "f",
+        "pred": "af",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "model": "GRPO - shaped reward, from no-LS model",
+    "file": "grpo_nols.pt",
+    "reverse_exact (Step1 task)": 1.0,
+    "no_b_words_exact": 1.0,
+    "b_words_skip_exact": 0.0,
+    "b_words_char_acc": 0.3391304347826087,
+    "b_leak_rate": 1.0,
+    "invalid_rate": 0.0,
+    "step2_task_on_random_words": 0.8548148148148148,
+    "b_words_per_length": {
+      "2": 0.0,
+      "3": 0.0,
+      "4": 0.0,
+      "5": 0.0,
+      "6": 0.0
+    },
+    "examples": [
+      {
+        "input": "mb",
+        "target": "m",
+        "pred": "bm",
+        "correct": false
+      },
+      {
+        "input": "bk",
+        "target": "k",
+        "pred": "kb",
+        "correct": false
+      },
+      {
+        "input": "tb",
+        "target": "t",
+        "pred": "bt",
+        "correct": false
+      },
+      {
+        "input": "zb",
+        "target": "z",
+        "pred": "bz",
+        "correct": false
+      },
+      {
+        "input": "bj",
+        "target": "j",
+        "pred": "jb",
+        "correct": false
+      },
+      {
+        "input": "fb",
+        "target": "f",
+        "pred": "bf",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "model": "GRPO - shaped reward, 600 steps",
+    "file": "grpo_shaped.pt",
+    "reverse_exact (Step1 task)": 0.8177777777777778,
+    "no_b_words_exact": 0.9566724436741768,
+    "b_words_skip_exact": 0.32976190476190476,
+    "b_words_char_acc": 0.6282327586206896,
+    "b_leak_rate": 0.0,
+    "invalid_rate": 0.0,
+    "step2_task_on_random_words": 0.8629629629629629,
+    "b_words_per_length": {
+      "2": 0.975,
+      "3": 0.555,
+      "4": 0.28,
+      "5": 0.205,
+      "6": 0.15
+    },
+    "examples": [
+      {
+        "input": "mb",
+        "target": "m",
+        "pred": "m",
+        "correct": true
+      },
+      {
+        "input": "bk",
+        "target": "k",
+        "pred": "k",
+        "correct": true
+      },
+      {
+        "input": "tb",
+        "target": "t",
+        "pred": "t",
+        "correct": true
+      },
+      {
+        "input": "zb",
+        "target": "z",
+        "pred": "z",
+        "correct": true
+      },
+      {
+        "input": "bj",
+        "target": "j",
+        "pred": "j",
+        "correct": true
+      },
+      {
+        "input": "fb",
+        "target": "f",
+        "pred": "f",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "model": "GRPO - shaped + entropy 0.02",
+    "file": "grpo_ent02.pt",
+    "reverse_exact (Step1 task)": 0.8281481481481482,
+    "no_b_words_exact": 0.9688041594454073,
+    "b_words_skip_exact": 0.3142857142857143,
+    "b_words_char_acc": 0.6195345557122708,
+    "b_leak_rate": 0.0,
+    "invalid_rate": 0.0,
+    "step2_task_on_random_words": 0.8696296296296296,
+    "b_words_per_length": {
+      "2": 0.975,
+      "3": 0.51,
+      "4": 0.29,
+      "5": 0.16,
+      "6": 0.165
+    },
+    "examples": [
+      {
+        "input": "mb",
+        "target": "m",
+        "pred": "m",
+        "correct": true
+      },
+      {
+        "input": "bk",
+        "target": "k",
+        "pred": "k",
+        "correct": true
+      },
+      {
+        "input": "tb",
+        "target": "t",
+        "pred": "t",
+        "correct": true
+      },
+      {
+        "input": "zb",
+        "target": "z",
+        "pred": "z",
+        "correct": true
+      },
+      {
+        "input": "bj",
+        "target": "j",
+        "pred": "j",
+        "correct": true
+      },
+      {
+        "input": "fb",
+        "target": "f",
+        "pred": "f",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "model": "GRPO - shaped + entropy 0.05",
+    "file": "grpo_ent05.pt",
+    "reverse_exact (Step1 task)": 0.8414814814814815,
+    "no_b_words_exact": 0.9844020797227037,
+    "b_words_skip_exact": 0.31666666666666665,
+    "b_words_char_acc": 0.651422398271516,
+    "b_leak_rate": 0.0011904761904761906,
+    "invalid_rate": 0.0,
+    "step2_task_on_random_words": 0.882962962962963,
+    "b_words_per_length": {
+      "2": 0.975,
+      "3": 0.515,
+      "4": 0.285,
+      "5": 0.175,
+      "6": 0.16
+    },
+    "examples": [
+      {
+        "input": "mb",
+        "target": "m",
+        "pred": "m",
+        "correct": true
+      },
+      {
+        "input": "bk",
+        "target": "k",
+        "pred": "k",
+        "correct": true
+      },
+      {
+        "input": "tb",
+        "target": "t",
+        "pred": "t",
+        "correct": true
+      },
+      {
+        "input": "zb",
+        "target": "z",
+        "pred": "z",
+        "correct": true
+      },
+      {
+        "input": "bj",
+        "target": "j",
+        "pred": "j",
+        "correct": true
+      },
+      {
+        "input": "fb",
+        "target": "f",
+        "pred": "f",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "model": "GRPO - shaped, G=32, 2000 steps",
+    "file": "grpo_long_g32.pt",
+    "reverse_exact (Step1 task)": 0.8244444444444444,
+    "no_b_words_exact": 0.9644714038128249,
+    "b_words_skip_exact": 0.2726190476190476,
+    "b_words_char_acc": 0.6226551226551227,
+    "b_leak_rate": 0.0,
+    "invalid_rate": 0.0,
+    "step2_task_on_random_words": 0.8607407407407407,
+    "b_words_per_length": {
+      "2": 0.45,
+      "3": 0.415,
+      "4": 0.29,
+      "5": 0.185,
+      "6": 0.165
+    },
+    "examples": [
+      {
+        "input": "mb",
+        "target": "m",
+        "pred": "h",
+        "correct": false
+      },
+      {
+        "input": "bk",
+        "target": "k",
+        "pred": "k",
+        "correct": true
+      },
+      {
+        "input": "tb",
+        "target": "t",
+        "pred": "h",
+        "correct": false
+      },
+      {
+        "input": "zb",
+        "target": "z",
+        "pred": "h",
+        "correct": false
+      },
+      {
+        "input": "bj",
+        "target": "j",
+        "pred": "j",
+        "correct": true
+      },
+      {
+        "input": "fb",
+        "target": "f",
+        "pred": "h",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "model": "GRPO - shaped, G=16, 2000 steps",
+    "file": "grpo_long_lr5e-5.pt",
+    "reverse_exact (Step1 task)": 0.837037037037037,
+    "no_b_words_exact": 0.9792027729636048,
+    "b_words_skip_exact": 0.3869047619047619,
+    "b_words_char_acc": 0.6583718450053324,
+    "b_leak_rate": 0.0,
+    "invalid_rate": 0.0,
+    "step2_task_on_random_words": 0.9022222222222223,
+    "b_words_per_length": {
+      "2": 0.975,
+      "3": 0.565,
+      "4": 0.355,
+      "5": 0.315,
+      "6": 0.195
+    },
+    "examples": [
+      {
+        "input": "mb",
+        "target": "m",
+        "pred": "m",
+        "correct": true
+      },
+      {
+        "input": "bk",
+        "target": "k",
+        "pred": "k",
+        "correct": true
+      },
+      {
+        "input": "tb",
+        "target": "t",
+        "pred": "t",
+        "correct": true
+      },
+      {
+        "input": "zb",
+        "target": "z",
+        "pred": "z",
+        "correct": true
+      },
+      {
+        "input": "bj",
+        "target": "j",
+        "pred": "j",
+        "correct": true
+      },
+      {
+        "input": "fb",
+        "target": "f",
+        "pred": "f",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "model": "GRPO - shaped, 4000 steps (FINAL)",
+    "file": "grpo_final.pt",
+    "reverse_exact (Step1 task)": 0.8251851851851851,
+    "no_b_words_exact": 0.9653379549393414,
+    "b_words_skip_exact": 0.3904761904761905,
+    "b_words_char_acc": 0.6708074534161491,
+    "b_leak_rate": 0.0,
+    "invalid_rate": 0.0,
+    "step2_task_on_random_words": 0.8807407407407407,
+    "b_words_per_length": {
+      "2": 0.975,
+      "3": 0.565,
+      "4": 0.385,
+      "5": 0.275,
+      "6": 0.22
+    },
+    "examples": [
+      {
+        "input": "mb",
+        "target": "m",
+        "pred": "m",
+        "correct": true
+      },
+      {
+        "input": "bk",
+        "target": "k",
+        "pred": "k",
+        "correct": true
+      },
+      {
+        "input": "tb",
+        "target": "t",
+        "pred": "t",
+        "correct": true
+      },
+      {
+        "input": "zb",
+        "target": "z",
+        "pred": "z",
+        "correct": true
+      },
+      {
+        "input": "bj",
+        "target": "j",
+        "pred": "j",
+        "correct": true
+      },
+      {
+        "input": "fb",
+        "target": "f",
+        "pred": "f",
+        "correct": true
+      }
+    ]
+  }
+]

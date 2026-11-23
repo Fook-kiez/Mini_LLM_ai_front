@@ -1,0 +1,90 @@
+[eval] step    0 | bomb-words exact   0.00% | b-leak 100.00% | no-b words exact 100.00% |   0.9s
+  step    0 | reward +0.160 | group-std 0.587 | rollout exact  22.7% | rollout b  48.4% | KL 1.0398
+[eval] step   25 | bomb-words exact  14.52% | b-leak   0.00% | no-b words exact  55.20% |  16.8s
+  step   25 | reward +0.236 | group-std 0.429 | rollout exact  11.7% | rollout b   1.2% | KL 1.0343
+[eval] step   50 | bomb-words exact  10.95% | b-leak   0.00% | no-b words exact  61.87% |  32.7s
+  step   50 | reward +0.523 | group-std 0.499 | rollout exact  19.1% | rollout b   1.8% | KL 1.0029
+[eval] step   75 | bomb-words exact  14.29% | b-leak   0.00% | no-b words exact  64.30% |  48.5s
+  step   75 | reward +0.464 | group-std 0.452 | rollout exact  18.9% | rollout b   1.4% | KL 1.4024
+[eval] step  100 | bomb-words exact  20.36% | b-leak   0.00% | no-b words exact  85.01% |  64.3s
+  step  100 | reward +0.735 | group-std 0.540 | rollout exact  32.6% | rollout b   0.6% | KL 1.0887
+[eval] step  125 | bomb-words exact  20.00% | b-leak   0.00% | no-b words exact  88.73% |  80.1s
+  step  125 | reward +0.885 | group-std 0.501 | rollout exact  38.1% | rollout b   1.0% | KL 1.2934
+[eval] step  150 | bomb-words exact  21.67% | b-leak   0.00% | no-b words exact  89.25% |  96.0s
+  step  150 | reward +1.015 | group-std 0.566 | rollout exact  47.5% | rollout b   1.6% | KL 1.4846
+[eval] step  175 | bomb-words exact  22.50% | b-leak   0.00% | no-b words exact  91.94% | 111.9s
+  step  175 | reward +0.481 | group-std 0.402 | rollout exact  21.3% | rollout b   0.6% | KL 1.2706
+[eval] step  200 | bomb-words exact  22.38% | b-leak   0.00% | no-b words exact  87.18% | 127.5s
+  step  200 | reward +0.879 | group-std 0.507 | rollout exact  39.1% | rollout b   1.6% | KL 1.4559
+[eval] step  225 | bomb-words exact  18.33% | b-leak   0.00% | no-b words exact  69.15% | 143.2s
+  step  225 | reward +0.733 | group-std 0.437 | rollout exact  33.0% | rollout b   0.6% | KL 0.8272
+[eval] step  250 | bomb-words exact  23.21% | b-leak   0.00% | no-b words exact  95.67% | 158.8s
+  step  250 | reward +0.857 | group-std 0.506 | rollout exact  38.1% | rollout b   0.6% | KL 0.9882
+[eval] step  275 | bomb-words exact  19.29% | b-leak   0.00% | no-b words exact  83.88% | 174.4s
+  step  275 | reward +0.846 | group-std 0.397 | rollout exact  35.0% | rollout b   0.2% | KL 0.8276
+[eval] step  300 | bomb-words exact  25.71% | b-leak   0.00% | no-b words exact  81.37% | 190.0s
+  step  300 | reward +0.722 | group-std 0.419 | rollout exact  28.7% | rollout b   1.0% | KL 1.3142
+[eval] step  325 | bomb-words exact  26.55% | b-leak   0.00% | no-b words exact  86.22% | 205.6s
+  step  325 | reward +0.830 | group-std 0.455 | rollout exact  36.9% | rollout b   0.8% | KL 0.8330
+[eval] step  350 | bomb-words exact  23.81% | b-leak   0.00% | no-b words exact  86.57% | 221.3s
+  step  350 | reward +1.063 | group-std 0.417 | rollout exact  46.3% | rollout b   0.8% | KL 1.4784
+[eval] step  375 | bomb-words exact  26.19% | b-leak   0.00% | no-b words exact  91.07% | 237.2s
+  step  375 | reward +0.968 | group-std 0.338 | rollout exact  38.7% | rollout b   0.6% | KL 1.0262
+[eval] step  400 | bomb-words exact  24.64% | b-leak   0.00% | no-b words exact  90.73% | 252.9s
+  step  400 | reward +0.916 | group-std 0.461 | rollout exact  37.9% | rollout b   0.4% | KL 1.5031
+[eval] step  425 | bomb-words exact  26.55% | b-leak   0.00% | no-b words exact  98.53% | 268.7s
+  step  425 | reward +0.995 | group-std 0.474 | rollout exact  41.6% | rollout b   0.6% | KL 1.2425
+[eval] step  450 | bomb-words exact  28.21% | b-leak   0.00% | no-b words exact  92.03% | 284.5s
+  step  450 | reward +1.119 | group-std 0.402 | rollout exact  43.9% | rollout b   0.0% | KL 1.0495
+[eval] step  475 | bomb-words exact  26.55% | b-leak   0.00% | no-b words exact  97.23% | 300.3s
+  step  475 | reward +1.142 | group-std 0.425 | rollout exact  51.4% | rollout b   1.0% | KL 1.2277
+[eval] step  500 | bomb-words exact  28.10% | b-leak   0.00% | no-b words exact  95.15% | 316.1s
+  step  500 | reward +0.905 | group-std 0.420 | rollout exact  31.4% | rollout b   0.8% | KL 1.3382
+[eval] step  525 | bomb-words exact  32.50% | b-leak   0.00% | no-b words exact  94.28% | 331.9s
+  step  525 | reward +0.980 | group-std 0.422 | rollout exact  42.2% | rollout b   1.0% | KL 1.6528
+[eval] step  550 | bomb-words exact  31.07% | b-leak   0.00% | no-b words exact  82.06% | 347.5s
+  step  550 | reward +1.018 | group-std 0.393 | rollout exact  45.5% | rollout b   0.6% | KL 1.1802
+[eval] step  575 | bomb-words exact  30.00% | b-leak   0.00% | no-b words exact  87.09% | 363.3s
+  step  575 | reward +0.978 | group-std 0.285 | rollout exact  42.2% | rollout b   0.4% | KL 1.2939
+[eval] step  600 | bomb-words exact  30.36% | b-leak   0.00% | no-b words exact  86.92% | 378.9s
+  step  600 | reward +0.787 | group-std 0.326 | rollout exact  26.6% | rollout b   0.6% | KL 1.1005
+[eval] step  625 | bomb-words exact  32.14% | b-leak   0.00% | no-b words exact  98.35% | 394.6s
+  step  625 | reward +1.171 | group-std 0.268 | rollout exact  51.6% | rollout b   1.0% | KL 2.4047
+[eval] step  650 | bomb-words exact  32.38% | b-leak   0.00% | no-b words exact  97.75% | 410.8s
+  step  650 | reward +1.143 | group-std 0.339 | rollout exact  49.8% | rollout b   0.4% | KL 1.1986
+[eval] step  675 | bomb-words exact  32.62% | b-leak   0.12% | no-b words exact  98.27% | 426.7s
+  step  675 | reward +1.052 | group-std 0.239 | rollout exact  45.7% | rollout b   0.4% | KL 1.3088
+[eval] step  700 | bomb-words exact  32.14% | b-leak   0.12% | no-b words exact  95.58% | 442.8s
+  step  700 | reward +0.987 | group-std 0.341 | rollout exact  39.1% | rollout b   0.4% | KL 1.5875
+[eval] step  725 | bomb-words exact  31.31% | b-leak   0.12% | no-b words exact  96.88% | 458.8s
+  step  725 | reward +1.117 | group-std 0.303 | rollout exact  48.4% | rollout b   0.0% | KL 1.2745
+[eval] step  750 | bomb-words exact  33.57% | b-leak   0.36% | no-b words exact  98.44% | 474.8s
+  step  750 | reward +1.157 | group-std 0.263 | rollout exact  45.9% | rollout b   0.6% | KL 1.1830
+[eval] step  775 | bomb-words exact  33.57% | b-leak   0.00% | no-b words exact  92.81% | 490.4s
+  step  775 | reward +1.143 | group-std 0.285 | rollout exact  49.0% | rollout b   0.6% | KL 1.2427
+[eval] step  800 | bomb-words exact  35.24% | b-leak   0.00% | no-b words exact  98.35% | 506.8s
+  step  800 | reward +1.276 | group-std 0.355 | rollout exact  55.5% | rollout b   0.2% | KL 1.3197
+[eval] step  825 | bomb-words exact  34.05% | b-leak   0.00% | no-b words exact  99.48% | 523.5s
+  step  825 | reward +1.211 | group-std 0.310 | rollout exact  51.6% | rollout b   0.6% | KL 3.0290
+[eval] step  850 | bomb-words exact  32.14% | b-leak   0.00% | no-b words exact  98.87% | 540.3s
+  step  850 | reward +1.310 | group-std 0.226 | rollout exact  58.6% | rollout b   0.8% | KL 1.0448
+[eval] step  875 | bomb-words exact  35.00% | b-leak   0.00% | no-b words exact  96.01% | 557.1s
+  step  875 | reward +1.196 | group-std 0.235 | rollout exact  51.2% | rollout b   0.2% | KL 2.2590
+[eval] step  900 | bomb-words exact  33.93% | b-leak   0.00% | no-b words exact  96.45% | 573.2s
+  step  900 | reward +1.328 | group-std 0.331 | rollout exact  60.7% | rollout b   0.2% | KL 2.1421
+[eval] step  925 | bomb-words exact  34.76% | b-leak   0.00% | no-b words exact  99.74% | 588.9s
+  step  925 | reward +1.260 | group-std 0.189 | rollout exact  56.8% | rollout b   0.2% | KL 2.0058
+[eval] step  950 | bomb-words exact  30.48% | b-leak   0.00% | no-b words exact  90.55% | 604.7s
+  step  950 | reward +1.178 | group-std 0.190 | rollout exact  48.0% | rollout b   0.0% | KL 1.6027
+[eval] step  975 | bomb-words exact  31.79% | b-leak   0.12% | no-b words exact  95.32% | 620.8s
+  step  975 | reward +1.081 | group-std 0.231 | rollout exact  40.4% | rollout b   0.0% | KL 1.4907
+[eval] step 1000 | bomb-words exact  31.43% | b-leak   0.00% | no-b words exact  96.88% | 636.2s
+examples:
+   {'input': 'mb', 'target': 'm', 'pred': 'm', 'correct': True}
+   {'input': 'bk', 'target': 'k', 'pred': 'k', 'correct': True}
+   {'input': 'tb', 'target': 't', 'pred': 't', 'correct': True}
+   {'input': 'zb', 'target': 'z', 'pred': 'z', 'correct': True}
+   {'input': 'bj', 'target': 'j', 'pred': 'j', 'correct': True}
+   {'input': 'fb', 'target': 'f', 'pred': 'f', 'correct': True}
+   {'input': 'bb', 'target': '', 'pred': 'q', 'correct': False}
+   {'input': 'br', 'target': 'r', 'pred': 'r', 'correct': True}
