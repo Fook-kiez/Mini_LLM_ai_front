@@ -1,7 +1,7 @@
 # 👶 baby.md — Mini Project: สอน GPT ตัวจิ๋วให้ "กลับคำ" และ "หลบระเบิด b"
 
 > เอกสารนี้เขียนให้คนที่ **ไม่มีพื้นฐานเลย** อ่านจบแล้วเข้าใจทั้งโปรเจกต์ ตั้งแต่ "AI คืออะไร" ไปจนถึง "GRPO ทำงานยังไง"
-> อ่านจากบนลงล่างได้เลย ไม่ต้องข้าม ถ้าเจอคำศัพท์แปลก ๆ ดูที่ [อภิธานศัพท์](#13-อภิธานศัพท์-คำศัพท์ที่ควรรู้) ท้ายเอกสาร
+> อ่านจากบนลงล่างได้เลย ไม่ต้องข้าม ถ้าเจอคำศัพท์แปลก ๆ ดูที่ [อภิธานศัพท์](#14-อภิธานศัพท์-คำศัพท์ที่ควรรู้) ท้ายเอกสาร
 
 ---
 
@@ -18,9 +18,10 @@
 8. [ปัญหาใหญ่: โมเดลมั่นใจเกินไปจนไม่กล้าลอง (Exploration)](#8-ปัญหาใหญ่-โมเดลมั่นใจเกินไปจนไม่กล้าลอง-exploration)
 9. [ผลการทดลองทั้งหมด](#9-ผลการทดลองทั้งหมด)
 10. [วิเคราะห์และอภิปรายผล](#10-วิเคราะห์และอภิปรายผล)
-11. [วิธีรันโค้ดเอง](#11-วิธีรันโค้ดเอง)
-12. [โครงสไลด์สำหรับ Step 3](#12-โครงสไลด์สำหรับ-step-3)
-13. [อภิธานศัพท์](#13-อภิธานศัพท์-คำศัพท์ที่ควรรู้)
+11. [อ่านโค้ดทีละส่วน (Code Walkthrough)](#11-อ่านโค้ดทีละส่วน-code-walkthrough) ⭐ ใหม่
+12. [วิธีรันโค้ดเอง](#12-วิธีรันโค้ดเอง)
+13. [โครงสไลด์สำหรับ Step 3](#13-โครงสไลด์สำหรับ-step-3)
+14. [อภิธานศัพท์](#14-อภิธานศัพท์-คำศัพท์ที่ควรรู้)
 
 ---
 
@@ -32,7 +33,7 @@
 |---|---|---|
 | **Step 1** | สร้าง GPT ตัวเล็ก ๆ (MiniGPT) **ตั้งแต่ศูนย์** แล้วสอนให้ **กลับลำดับตัวอักษร** (ยาว 2–6 ตัว) | `<BOS> h e l l o <SEP>` → `o l l e h <EOS>` |
 | **Step 2** | เอาโมเดลจาก Step 1 มา **ฝึกต่อด้วย Reinforcement Learning (GRPO/PPO)** ให้ **ข้ามตัว "b" (ระเบิด 💣)** | `<BOS> a b c d e <SEP>` → `e d c a <EOS>` |
-| **Step 3** | ทำ **พรีเซนเทชัน** สรุป config, ข้อมูล, ผลลัพธ์, reward, การวิเคราะห์ | (ดูหัวข้อ 12) |
+| **Step 3** | ทำ **พรีเซนเทชัน** สรุป config, ข้อมูล, ผลลัพธ์, reward, การวิเคราะห์ | (ดูหัวข้อ 13) |
 
 **ผลลัพธ์ที่ได้ (สรุปสั้น ๆ):**
 
@@ -510,9 +511,665 @@ def reward_shaped(x, out):
 
 ---
 
-## 11. วิธีรันโค้ดเอง
+## 11. อ่านโค้ดทีละส่วน (Code Walkthrough)
 
-### 11.1 ไฟล์ในโปรเจกต์
+> หัวข้อนี้พาอ่านโค้ด **ทุกไฟล์** แบบทีละท่อน พร้อมตัวอย่างตัวเลขจริง เปิดไฟล์คู่กันไปด้วยจะเข้าใจง่ายที่สุด
+> ไม่ต้องเก่ง Python มาก่อน — หัวข้อ 11.1 ปูพื้นที่ต้องรู้ให้แล้ว
+
+### 11.0 แผนที่: ไฟล์ไหนเรียกใช้อะไร
+
+```
+                         common.py  (กล่องเครื่องมือกลาง)
+   ┌────────────────────────────────────────────────────────────────────┐
+   │ tokenizer      : ITOS, STOI, encode, prompt_ids, full_ids          │
+   │ ข้อมูล          : random_word, build_eval_sets, WordSampler,         │
+   │                  make_sft_batch                                    │
+   │ โมเดล          : GPTConfig, CausalSelfAttention, Block, MiniGPT      │
+   │ ใช้งานโมเดล     : generate, parse_completion, predict, evaluate        │
+   │ บันทึก/โหลด     : save_model, load_model                              │
+   └───────▲───────────────────────▲───────────────────────▲────────────┘
+           │ import                │ import                │ import
+   train_pretrain.py         train_grpo.py           evaluate_all.py
+   (Step 1: สอนกลับคำ)        (Step 2: GRPO ข้าม b)     (วัดผลทุกโมเดล)
+           │                       │                       │
+           ▼                       ▼                       ▼
+   checkpoints/pretrain.pt ──► checkpoints/grpo_*.pt ──► results/summary.md/.png
+```
+
+ลำดับการทำงาน: `train_pretrain.py` → ได้ `pretrain.pt` → `train_grpo.py` โหลดมาเทรนต่อ → ได้ `grpo_final.pt` → `evaluate_all.py` วัดผลทุกตัว
+
+### 11.1 Python / PyTorch ขั้นต่ำที่ต้องรู้
+
+| สิ่งที่เห็นในโค้ด | ความหมาย |
+|---|---|
+| `import torch` | ใช้ไลบรารี PyTorch (ไลบรารีสร้าง/เทรน neural network) |
+| **tensor** | "ตารางตัวเลขหลายมิติ" เหมือน list ซ้อน list แต่คำนวณเร็วมาก |
+| **shape** เช่น `[B, T]` | ขนาดของ tensor: `B` = จำนวนแถว (batch), `T` = ความยาว (time/token), `C` = จำนวนช่องต่อ token (128) |
+| `x.view(...)` | จัดรูปทรงใหม่ (ตัวเลขเหมือนเดิม) เช่น 512 ตัว → 32×16 |
+| `nn.Module` | "ชิ้นส่วน" ของ neural network ทุกชั้นสืบทอดจากคลาสนี้ |
+| `__init__` | ฟังก์ชันสร้างชิ้นส่วน (ประกาศว่ามี layer อะไรบ้าง) |
+| `forward(x)` | ฟังก์ชันบอกว่าข้อมูลไหลผ่านชิ้นส่วนนี้ยังไง — เรียกด้วย `model(x)` |
+| `loss.backward()` | คำนวณ gradient ของทุกพารามิเตอร์ (backpropagation) อัตโนมัติ |
+| `opt.step()` | ให้ optimizer หมุนปุ่มตาม gradient |
+| `opt.zero_grad()` | ล้าง gradient เก่า (ไม่งั้นมันจะบวกสะสม) |
+| `with torch.no_grad():` | "แค่คำนวณ ไม่ต้องเตรียม gradient" — เร็วกว่าและประหยัดหน่วยความจำ |
+| `model.train()` / `model.eval()` | สลับโหมดเทรน/ใช้งาน |
+| `-100` ใน label | ค่าพิเศษที่แปลว่า "ข้ามตำแหน่งนี้ ไม่ต้องคิด loss" |
+
+**การเทรน neural network ทุกตัวในโลกมีแกนกลาง 5 บรรทัดนี้:**
+
+```python
+logits, _ = model(X)                 # 1. ทาย
+loss = cross_entropy(logits, Y)      # 2. วัดว่าผิดแค่ไหน
+opt.zero_grad()                      # 3. ล้าง gradient เก่า
+loss.backward()                      # 4. คำนวณทิศทางหมุนปุ่ม
+opt.step()                           # 5. หมุนปุ่ม
+```
+
+ทั้ง `train_pretrain.py` และ `train_grpo.py` ก็คือ 5 บรรทัดนี้ แค่ต่างกันที่ "วิธีคิด loss"
+
+---
+
+### 11.2 `common.py` ส่วนที่ 1 — Tokenizer
+
+```python
+CHARS = "abcdefghijklmnopqrstuvwxyz"
+SPECIAL = ["<PAD>", "<BOS>", "<SEP>", "<EOS>"]
+ITOS = SPECIAL + list(CHARS)                 # id -> token
+STOI = {s: i for i, s in enumerate(ITOS)}    # token -> id
+PAD, BOS, SEP, EOS = 0, 1, 2, 3
+VOCAB_SIZE = len(ITOS)                       # 30
+```
+
+- `ITOS` (**I**nt **TO** **S**tring) = list ที่ตำแหน่ง i เก็บ token ตัวที่ i → `ITOS[4]` = `'a'`
+- `STOI` (**S**tring **TO** **I**nt) = dict กลับด้าน → `STOI['a']` = `4`, `STOI['z']` = `29`
+- token พิเศษได้เลข 0–3, ตัวอักษร a–z ได้เลข 4–29
+
+```python
+MIN_LEN, MAX_LEN = 2, 6
+BLOCK_SIZE = 1 + MAX_LEN + 1 + MAX_LEN + 1   # = 15
+MAX_NEW_TOKENS = MAX_LEN + 1                 # = 7  (คำตอบ 6 ตัว + EOS)
+```
+
+`BLOCK_SIZE` = ความยาวสูงสุดที่โมเดลต้องรับได้ = BOS(1) + โจทย์(6) + SEP(1) + คำตอบ(6) + EOS(1) = 15
+
+```python
+def encode(s):          return [STOI[c] for c in s]          # "abc" -> [4, 5, 6]
+def target_reverse(x):  return x[::-1]                       # "abc" -> "cba"
+def target_skip_b(x):   return x[::-1].replace("b", "")      # "abc" -> "ca"
+def prompt_ids(x):      return [BOS] + encode(x) + [SEP]     # "abc" -> [1, 4, 5, 6, 2]
+def full_ids(x, y):     return [BOS] + encode(x) + [SEP] + encode(y) + [EOS]
+```
+
+> 💡 `x[::-1]` คือท่าของ Python ที่แปลว่า "อ่านจากหลังมาหน้า" = กลับคำ
+> `target_skip_b` คือ **เฉลยของ Step 2** — ใช้แค่ตอนให้คะแนน (reward) และวัดผล ไม่เคยถูกป้อนให้โมเดลเรียนตรง ๆ
+
+---
+
+### 11.3 `common.py` ส่วนที่ 2 — สร้างข้อมูล
+
+#### `random_word` — สุ่มคำ
+
+```python
+def random_word(rng, lo=MIN_LEN, hi=MAX_LEN, must_have_b=False):
+    L = rng.randint(lo, hi)                          # สุ่มความยาว 2..6
+    w = [rng.choice(CHARS) for _ in range(L)]        # สุ่มตัวอักษรทีละตัว
+    if must_have_b and "b" not in w:                 # ถ้าบังคับให้มี b แต่ดันไม่มี
+        for _ in range(rng.randint(1, min(2, L))):   #   ใส่ b 1-2 ตัว
+            w[rng.randrange(L)] = "b"                #   ที่ตำแหน่งสุ่ม
+    return "".join(w)                                # list -> string
+```
+
+`rng` = ตัวสุ่มที่มี **seed** (เลขตั้งต้น) — seed เดิมจะสุ่มได้ผลเดิมทุกครั้ง ทำให้ทดลองซ้ำได้ (reproducible)
+
+#### `build_eval_sets` — สร้างข้อสอบ (ครั้งเดียว)
+
+```python
+if os.path.exists(path_r) and os.path.exists(path_b):
+    return json.load(open(path_r)), json.load(open(path_b))   # มีไฟล์แล้ว -> โหลดเลย
+rng = random.Random(seed)                                      # seed=1234 ตายตัว
+...
+for L in range(MIN_LEN, MAX_LEN + 1):                          # ทุกความยาว 2..6
+    n_r = min(n_per_len, 150) if L == 2 else n_per_len         # ยาว 2 เอาแค่ 150
+    ...
+        if w not in seen:                                      # กันคำซ้ำ
+            seen.add(w); ev_r.append(w); cnt += 1
+```
+
+- ครั้งแรกสุ่มแล้วเซฟเป็น `data/eval_reverse.json` และ `data/eval_bomb.json`
+- ครั้งต่อไปโหลดไฟล์เดิม → **ทุกโมเดลสอบข้อสอบชุดเดียวกันเสมอ** (เปรียบเทียบกันได้อย่างยุติธรรม)
+
+#### `WordSampler` — ตัวแจกคำสำหรับเทรน (ห้ามซ้ำข้อสอบ)
+
+```python
+class WordSampler:
+    def __init__(self, held_out, seed=0):
+        self.held_out = set(held_out)        # คำในข้อสอบทั้งหมด (set ค้นหาเร็ว)
+        self.rng = random.Random(seed)
+
+    def sample(self, must_have_b=False):
+        while True:
+            w = random_word(self.rng, must_have_b=must_have_b)
+            if w not in self.held_out:       # ถ้าบังเอิญตรงข้อสอบ -> สุ่มใหม่
+                return w
+```
+
+นี่คือสิ่งที่รับประกันว่า **โมเดลไม่เคยเห็นข้อสอบตอนเทรน** (ไม่มี data leakage)
+
+#### `make_sft_batch` — แปลงคำเป็น tensor สำหรับเทรน Step 1
+
+```python
+def make_sft_batch(words, target_fn=target_reverse, device="cpu"):
+    T = BLOCK_SIZE - 1                                     # 14
+    X = torch.full((len(words), T), PAD, dtype=torch.long) # input  เริ่มเป็น PAD ทั้งหมด
+    Y = torch.full((len(words), T), -100, dtype=torch.long)# label  เริ่มเป็น "ข้าม" ทั้งหมด
+    for i, w in enumerate(words):
+        ids = full_ids(w, target_fn(w))
+        inp, tgt = ids[:-1], ids[1:]                       # เลื่อนกัน 1 ช่อง!
+        sep_pos = len(w) + 1                               # ตำแหน่งของ <SEP>
+        X[i, : len(inp)] = torch.tensor(inp)
+        lab = torch.tensor(tgt)
+        lab[:sep_pos] = -100                               # ไม่ต้องทายส่วนโจทย์
+        Y[i, : len(tgt)] = lab
+    return X.to(device), Y.to(device)
+```
+
+**ตัวอย่างจริงกับคำ `abc`:** `ids = [BOS a b c SEP c b a EOS] = [1, 4, 5, 6, 2, 6, 5, 4, 3]`, `sep_pos = 4`
+
+| ตำแหน่ง t | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8–13 |
+|---|---|---|---|---|---|---|---|---|---|
+| **X** (เห็นอะไร) | BOS | a | b | c | SEP | c | b | a | PAD |
+| **Y** (ต้องทายอะไรต่อ) | ~~a~~ -100 | ~~b~~ -100 | ~~c~~ -100 | ~~SEP~~ -100 | **c** | **b** | **a** | **EOS** | -100 |
+
+- **"เลื่อนกัน 1 ช่อง"** คือหัวใจของ GPT: ที่ตำแหน่ง t โมเดลเห็น X[0..t] แล้วต้องทาย Y[t] = token ถัดไป
+- 4 ช่องแรกเป็น -100 เพราะตัวอักษรโจทย์เป็นของสุ่ม ทายไม่ได้ (นี่คือ **loss masking** จากหัวข้อ 4.2)
+- คิด loss แค่ 4 ช่อง: เห็น `SEP` → ต้องตอบ `c`, เห็น `c` → ต้องตอบ `b`, ...
+
+---
+
+### 11.4 `common.py` ส่วนที่ 3 — ตัวโมเดล MiniGPT
+
+#### `GPTConfig` — ใบสเปกของโมเดล
+
+```python
+@dataclass
+class GPTConfig:
+    vocab_size: int = VOCAB_SIZE   # 30
+    block_size: int = BLOCK_SIZE   # 15
+    n_layer: int = 3
+    n_head: int = 4
+    n_embd: int = 128
+    dropout: float = 0.0
+```
+
+`@dataclass` = ท่าลัดของ Python สร้างคลาสเก็บค่าตั้งค่า อยากได้โมเดลใหญ่ขึ้นแก้ตรงนี้ที่เดียว
+
+#### `CausalSelfAttention` — ส่วน "หันไปมอง token อื่น"
+
+```python
+class CausalSelfAttention(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.n_head = cfg.n_head
+        self.qkv = nn.Linear(cfg.n_embd, 3 * cfg.n_embd)   # 128 -> 384 (Q, K, V รวมกัน)
+        self.proj = nn.Linear(cfg.n_embd, cfg.n_embd)      # 128 -> 128
+
+    def forward(self, x):                                  # x: [B, T, 128]
+        B, T, C = x.shape
+        q, k, v = self.qkv(x).split(C, dim=2)              # แต่ละตัว [B, T, 128]
+        q = q.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)   # [B, 4, T, 32]
+        k = ...  (เหมือนกัน)
+        v = ...  (เหมือนกัน)
+        y = F.scaled_dot_product_attention(q, k, v, is_causal=True)      # [B, 4, T, 32]
+        y = y.transpose(1, 2).contiguous().view(B, T, C)                  # [B, T, 128]
+        return self.proj(y)
+```
+
+**Q, K, V คืออะไร** (เปรียบเทียบกับห้องสมุด 📚):
+- **Q (Query)** = "ฉันกำลังหาอะไร" — เช่น token ตำแหน่งคำตอบที่ 1 ถามว่า "ใครคือตัวอักษรตัวสุดท้ายของโจทย์?"
+- **K (Key)** = "ฉันคือใคร" — แต่ละ token ประกาศว่าตัวเองอยู่ตำแหน่งไหน เป็นตัวอะไร
+- **V (Value)** = "ข้อมูลที่ฉันจะส่งให้" — เนื้อหาที่ถูกดึงไป
+- คะแนน = Q·K (ยิ่งตรงกันยิ่งสูง) → softmax → ใช้เป็นน้ำหนักเฉลี่ย V
+
+**รูปทรง:** แบ่ง 128 ช่องเป็น 4 head × 32 ช่อง → แต่ละ head ทำ attention แยกกัน (มองหาคนละเรื่อง) → ต่อกลับเป็น 128
+
+`is_causal=True` = ใส่ **causal mask** ให้ตำแหน่ง t มองได้แค่ 0..t (ห้ามดูอนาคต)
+`F.scaled_dot_product_attention` คือฟังก์ชันสำเร็จรูปของ PyTorch ที่คำนวณ `softmax(Q·Kᵀ / √32) · V` ให้
+
+#### `Block` — Transformer 1 ชั้น
+
+```python
+class Block(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.ln1 = nn.LayerNorm(cfg.n_embd)
+        self.attn = CausalSelfAttention(cfg)
+        self.ln2 = nn.LayerNorm(cfg.n_embd)
+        self.mlp = nn.Sequential(
+            nn.Linear(128, 512), nn.GELU(),     # ขยาย 4 เท่า + ฟังก์ชันไม่เชิงเส้น
+            nn.Linear(512, 128), ...)           # ย่อกลับ
+
+    def forward(self, x):
+        x = x + self.attn(self.ln1(x))   # residual: ของเดิม + สิ่งที่ attention หามาได้
+        x = x + self.mlp(self.ln2(x))    # residual: ของเดิม + สิ่งที่ MLP คิดเพิ่ม
+        return x
+```
+
+- `x = x + ...` คือ **residual connection** — ไม่ได้ "แทนที่" ข้อมูลเดิม แต่ "เติม" เข้าไป
+- ทำ LayerNorm **ก่อน** attention/MLP เรียกว่า **pre-LN** (แบบ GPT-2) เทรนเสถียรกว่า
+- `GELU` = ฟังก์ชันไม่เชิงเส้น (ถ้าไม่มี ต่อกี่ชั้นก็เท่ากับชั้นเดียว)
+
+#### `MiniGPT` — ประกอบร่าง
+
+```python
+class MiniGPT(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.tok_emb = nn.Embedding(30, 128)        # ตาราง 30 แถว: token id -> เวกเตอร์ 128
+        self.pos_emb = nn.Embedding(15, 128)        # ตาราง 15 แถว: ตำแหน่ง -> เวกเตอร์ 128
+        self.blocks = nn.ModuleList([Block(cfg) for _ in range(3)])
+        self.ln_f = nn.LayerNorm(128)
+        self.head = nn.Linear(128, 30, bias=False)  # เวกเตอร์ 128 -> คะแนน 30 token
+        self.head.weight = self.tok_emb.weight      # weight tying: ใช้ตารางเดียวกัน
+        self.apply(self._init)                      # สุ่มค่าเริ่มต้น (std 0.02)
+
+    def forward(self, idx, targets=None):           # idx: [B, T] เลข token
+        B, T = idx.shape
+        pos = torch.arange(T)                       # [0, 1, 2, ..., T-1]
+        x = self.tok_emb(idx) + self.pos_emb(pos)   # [B, T, 128]  "ตัวอะไร" + "อยู่ไหน"
+        for blk in self.blocks:
+            x = blk(x)                              # ผ่าน 3 ชั้น, รูปทรงคงเดิม
+        logits = self.head(self.ln_f(x))            # [B, T, 30]  คะแนนของทุก token ถัดไป
+        ...
+        return logits, loss
+```
+
+**ไล่รูปทรงด้วยตัวอย่าง** (batch 256 คำ):
+
+| ขั้น | shape | ความหมาย |
+|---|---|---|
+| `idx` | [256, 14] | เลข token |
+| `tok_emb(idx) + pos_emb(pos)` | [256, 14, 128] | ทุก token กลายเป็นเวกเตอร์ |
+| ผ่าน 3 blocks | [256, 14, 128] | รูปทรงเดิม แต่ "เข้าใจบริบท" มากขึ้น |
+| `logits` | [256, 14, 30] | ทุกตำแหน่งมีคะแนน 30 ค่า สำหรับทาย token ถัดไป |
+
+**นับพารามิเตอร์ 600,832 มาจากไหน:**
+
+| ส่วน | สูตร | จำนวน |
+|---|---|---|
+| tok_emb | 30 × 128 | 3,840 |
+| pos_emb | 15 × 128 | 1,920 |
+| 1 Block: LayerNorm ×2 | 2 × (128+128) | 512 |
+| 1 Block: qkv | 128×384 + 384 | 49,536 |
+| 1 Block: proj | 128×128 + 128 | 16,512 |
+| 1 Block: MLP | (128×512+512) + (512×128+128) | 131,712 |
+| **1 Block รวม** | | **198,272** |
+| 3 Blocks | × 3 | 594,816 |
+| ln_f | 128+128 | 256 |
+| head | ใช้ร่วมกับ tok_emb (tying) | 0 |
+| **รวม** | | **600,832** ✅ |
+
+---
+
+### 11.5 `common.py` ส่วนที่ 4 — ให้โมเดล "พูด" (generate)
+
+```python
+@torch.no_grad()
+def generate(model, words, greedy=True, temperature=1.0, device="cpu"):
+    model.eval()
+    B = len(words)
+    seq = torch.full((B, BLOCK_SIZE), PAD, dtype=torch.long)   # [B, 15] เต็มไปด้วย PAD
+    plen = []
+    for i, w in enumerate(words):                              # วางโจทย์ไว้ซ้ายสุดของแต่ละแถว
+        p = prompt_ids(w)
+        seq[i, : len(p)] = torch.tensor(p)
+        plen.append(len(p))
+    cur = torch.tensor(plen)                  # แต่ละแถว "เขียนถึงตำแหน่งไหนแล้ว"
+    done = torch.zeros(B, dtype=torch.bool)   # แถวไหนพูดจบ (เจอ EOS) แล้ว
+    rows = torch.arange(B)
+    for _ in range(MAX_NEW_TOKENS):           # พูดได้สูงสุด 7 token
+        logits, _ = model(seq)                # [B, 15, 30]
+        last = logits[rows, cur - 1]          # หยิบคะแนนที่ตำแหน่งสุดท้ายของแต่ละแถว [B, 30]
+        if greedy:
+            nxt = last.argmax(-1)                                   # เลือกตัวคะแนนสูงสุด
+        else:
+            probs = F.softmax(last / temperature, dim=-1)           # แปลงเป็นความน่าจะเป็น
+            nxt = torch.multinomial(probs, 1).squeeze(-1)           # สุ่มตามความน่าจะเป็น
+        can_write = (~done) & (cur < BLOCK_SIZE)
+        seq[rows[can_write], cur[can_write]] = nxt[can_write]       # เขียน token ใหม่ต่อท้าย
+        done = done | (nxt == EOS) | (cur + 1 >= BLOCK_SIZE)
+        cur = cur + can_write.long()
+        if done.all():
+            break
+    return seq, plen
+```
+
+**ปัญหา:** โจทย์ยาวไม่เท่ากัน (`ab` กับ `abcdef`) จะทำเป็น batch เดียวกันยังไง?
+**วิธีแก้:** วางทุกคำชิดซ้าย เติม PAD ทางขวา แล้วให้แต่ละแถวจำ "ตำแหน่งปัจจุบัน" ของตัวเอง (`cur`)
+ทำได้เพราะ **causal mask**: PAD ที่อยู่ทางขวาไม่มีทางส่งผลกับตำแหน่งทางซ้าย
+
+**ตัวอย่างการทำงาน** (`words = ["ab", "xyz"]`, greedy):
+
+| รอบ | แถว 0 (`ab`) | แถว 1 (`xyz`) |
+|---|---|---|
+| เริ่ม | `BOS a b SEP` · cur=4 | `BOS x y z SEP` · cur=5 |
+| 1 | + `b` | + `z` |
+| 2 | + `a` | + `y` |
+| 3 | + `EOS` → done | + `x` |
+| 4 | (ไม่เขียนแล้ว) | + `EOS` → done → หยุดลูป |
+
+**Greedy vs Sampling:**
+- `greedy=True` (ใช้ตอนวัดผล): เลือกตัวที่มั่นใจที่สุด → ผลลัพธ์เหมือนเดิมทุกครั้ง
+- `greedy=False` (ใช้ตอน GRPO): สุ่มตามความน่าจะเป็น → ได้คำตอบหลากหลาย (จำเป็นสำหรับ exploration)
+- `temperature`: หาร logits ก่อน softmax — T > 1 ทำให้การกระจายแบนลง (สุ่มมั่วขึ้น), T < 1 ทำให้แหลมขึ้น
+
+#### `parse_completion` — แปลงผลลัพธ์กลับเป็นข้อความ
+
+```python
+def parse_completion(seq_row, plen):
+    out = []
+    for t in seq_row[plen:].tolist():      # อ่านเฉพาะส่วนหลัง SEP
+        if t == EOS:
+            return "".join(out)            # เจอ EOS -> จบ คืนข้อความ
+        if t < len(SPECIAL):               # เจอ PAD/BOS/SEP กลางคำตอบ -> รูปแบบเสีย
+            return None
+        out.append(ITOS[t])
+    return None                            # ไม่เจอ EOS เลย -> รูปแบบเสีย
+```
+
+`None` = "คำตอบพัง" → reward ให้ -1 และนับว่าผิดตอนวัดผล
+
+#### `evaluate` — วัดผล
+
+```python
+def evaluate(model, words, target_fn, device="cpu"):
+    preds = predict(model, words, device)      # greedy ทุกคำ
+    for w, p in zip(words, preds):
+        t = target_fn(w)                       # เฉลย (กลับคำ หรือ กลับคำ+ลบ b)
+        ok = (p == t)                          # ถูกเป๊ะทั้งคำไหม
+        ...
+        has_b += ("b" in p)                    # นับ b-leak
+    return {"exact_match": ..., "per_length": ..., "b_leak_rate": ..., ...}
+```
+
+ฟังก์ชันเดียวใช้วัดได้ทั้ง Step 1 และ 2 แค่เปลี่ยน `target_fn` (`target_reverse` หรือ `target_skip_b`)
+
+---
+
+### 11.6 `train_pretrain.py` — Step 1
+
+#### ตาราง learning rate
+
+```python
+def lr_at(step):
+    if step < WARMUP:                                   # 200 step แรก: ค่อย ๆ เพิ่มจาก 0
+        return LR * (step + 1) / WARMUP
+    prog = (step - WARMUP) / max(1, STEPS - WARMUP)     # ความคืบหน้า 0 -> 1
+    return LR * 0.1 + 0.9 * LR * 0.5 * (1 + math.cos(math.pi * prog))   # cosine ลงเหลือ 10%
+```
+
+```
+lr
+1e-3 ┤    ╭──╮___
+     │   ╱       ‾‾‾‾‾╲___
+     │  ╱                 ‾‾‾╲____
+1e-4 ┤ ╱                          ‾‾‾‾────
+     └┴────────────────────────────────────► step
+      0  200                            3000
+     warmup        cosine decay
+```
+
+- **warmup:** ช่วงแรกโมเดลยังมั่ว gradient แรง ถ้าก้าวยาวเลยอาจกระเด็น → เริ่มเบา ๆ
+- **cosine decay:** ช่วงท้ายก้าวสั้นลง เพื่อปรับละเอียด
+
+#### ลูปเทรน (5 บรรทัดหลักจากหัวข้อ 11.1)
+
+```python
+for step in range(STEPS):                                  # 3000 รอบ
+    model.train()
+    for g in opt.param_groups:
+        g["lr"] = lr_at(step)                              # ตั้ง lr ของรอบนี้
+    words = [sampler.sample() for _ in range(BATCH_SIZE)]  # สุ่ม 256 คำใหม่
+    X, Y = make_sft_batch(words, target_reverse, DEVICE)   # แปลงเป็น tensor
+    logits, _ = model(X)                                   # 1. ทาย        [256, 14, 30]
+    loss = F.cross_entropy(                                # 2. วัดว่าผิดแค่ไหน
+        logits.view(-1, 30), Y.view(-1),                   #    ยืดเป็น [3584, 30] กับ [3584]
+        ignore_index=-100,                                 #    ข้ามช่อง -100
+        label_smoothing=args.label_smoothing)              #    0.1 (หัวข้อ 8.2)
+    opt.zero_grad(set_to_none=True)                        # 3. ล้าง gradient
+    loss.backward()                                        # 4. backprop
+    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)#    กัน gradient ใหญ่เกิน
+    opt.step()                                             # 5. หมุนปุ่ม
+```
+
+- `logits.view(-1, 30)`: `cross_entropy` อยากได้ตาราง 2 มิติ [จำนวนตัวอย่าง, จำนวนคลาส] จึงยืด 256×14 = 3,584 ตำแหน่งเป็นแถวเดียว
+- `clip_grad_norm_(…, 1.0)`: ถ้า gradient รวมยาวเกิน 1 ให้ย่อลง (กันการก้าวพลาดครั้งใหญ่)
+
+**Cross-entropy ทำงานยังไง:** ถ้าเฉลยคือ `c` และโมเดลให้ความน่าจะเป็น `c` = p
+→ loss = −log(p) — ถ้า p = 1 → loss = 0, ถ้า p = 0.01 → loss = 4.6
+**Label smoothing 0.1:** เปลี่ยนเฉลยจาก "c = 100%" เป็น "c ≈ 90%, ตัวอื่นแบ่งกัน 10%" → loss ต่ำสุดไม่ใช่ 0 (นี่คือเหตุผลที่ log แสดง loss ค้างที่ 0.6432)
+
+ท้ายไฟล์: บันทึกโมเดลด้วย `save_model` → วัดผล 3 แบบ → เขียน `results/pretrain_metrics.json` → วาดกราฟ `pretrain_curves.png`
+
+---
+
+### 11.7 `train_grpo.py` — Step 2 (ส่วนที่สำคัญที่สุด)
+
+#### ส่วนที่ 1: Reward functions
+
+```python
+def common_prefix_len(a, b):        # นับว่าตัวอักษรตรงกันต่อเนื่องจากตัวแรกกี่ตัว
+    n = 0
+    for c1, c2 in zip(a, b):        # "edcaa" vs "edca" -> e=e, d=d, c=c, a=a -> 4
+        if c1 != c2:
+            break
+        n += 1
+    return n
+
+def reward_shaped(x, out):
+    if out is None:
+        return -1.0                                          # รูปแบบพัง
+    tgt = target_skip_b(x)                                   # เฉลย
+    denom = max(len(out), len(tgt))
+    r = common_prefix_len(out, tgt) / denom if denom > 0 else 1.0   # 0..1
+    r -= 0.5 * out.count("b")                                # หัก 0.5 ต่อ b
+    r -= 0.5 * abs(len(out) - len(tgt)) / max(len(tgt), 1)  # หักถ้ายาวผิด
+    if out == tgt:
+        r += 1.0                                             # โบนัสถูกเป๊ะ
+    return r
+```
+
+**ลองคำนวณด้วยมือ** — โจทย์ `gob`, เฉลย `og` (ยาว 2):
+
+| คำตอบ | prefix/denom | หัก b | หักความยาว | โบนัส | **รวม** |
+|---|---|---|---|---|---|
+| `bog` | 0/3 = 0 | −0.5 | −0.5×1/2 = −0.25 | 0 | **−0.75** |
+| `oo` | 1/2 = 0.5 | 0 | 0 | 0 | **0.50** |
+| `o` | 1/2 = 0.5 | 0 | −0.25 | 0 | **0.25** |
+| `og` | 2/2 = 1 | 0 | 0 | +1 | **2.00** |
+
+`REWARDS = {"shaped": ..., "similarity": ..., "naive": ...}` ทำให้เลือก reward ได้จาก command line ด้วย `--reward naive`
+
+#### ส่วนที่ 2: `completion_logprobs` — "โมเดลให้โอกาสคำตอบนี้เท่าไร"
+
+```python
+def completion_logprobs(model, seq, plen, temperature, return_entropy=False):
+    logits, _ = model(seq[:, :-1])                                  # [B, 14, 30]
+    logp_all = F.log_softmax(logits / temperature, dim=-1)          # log ความน่าจะเป็นทุก token
+    tgt = seq[:, 1:]                                                # token ที่ "ถูกเลือกจริง"
+    logp = logp_all.gather(-1, tgt.unsqueeze(-1)).squeeze(-1)       # หยิบเฉพาะของตัวที่เลือก [B, 14]
+    entropy = -(logp_all.exp() * logp_all).sum(-1)                  # ความไม่แน่ใจ ณ แต่ละตำแหน่ง
+    mask = torch.zeros(B, T)
+    for i in range(B):
+        start = plen[i] - 1               # ตำแหน่งที่ทาย token คำตอบตัวแรก
+        row = seq[i, plen[i]:].tolist()
+        n = row.index(EOS) + 1 if EOS in row else len(row)
+        mask[i, start: start + n] = 1.0   # 1 = ตำแหน่งที่เป็นคำตอบ (รวม EOS)
+    return logp, mask, (entropy)
+```
+
+- `gather` = "หยิบ" ค่าจากตารางตาม index — จาก 30 ค่าต่อตำแหน่ง หยิบเฉพาะของ token ที่โมเดลสุ่มได้จริง
+- **ทำไมใช้ log?** ความน่าจะเป็นของทั้งคำ = คูณกันทุกตัว (เช่น 0.9 × 0.8 × 0.95) แต่ log ของมันคือ "บวกกัน" ซึ่งคำนวณง่ายและไม่เจอปัญหาเลขเล็กเกินไป
+- **mask:** เราสนใจแค่ token ที่โมเดล "ตัดสินใจเอง" (ส่วนคำตอบ) ไม่ใช่ส่วนโจทย์ หรือ PAD หลัง EOS
+
+ตัวอย่าง: โจทย์ `gob` (plen=5), คำตอบ `og<EOS>` → mask = 1 ที่ตำแหน่ง 4, 5, 6 (ทาย `o`, `g`, `EOS`)
+
+#### ส่วนที่ 3: เตรียมของก่อนเทรน
+
+```python
+policy = load_model("checkpoints/pretrain.pt")     # โมเดลที่จะเทรน (เริ่มจาก Step 1)
+ref = load_model(...) หรือ copy.deepcopy(policy)   # สำเนา "แช่แข็ง" ไว้วัด KL
+for p in ref.parameters():
+    p.requires_grad_(False)                        # ห้าม ref เปลี่ยน
+opt = torch.optim.AdamW(policy.parameters(), lr=args.lr, weight_decay=0.0)
+```
+
+#### ส่วนที่ 4: ลูป GRPO — 3 ขั้นต่อ step
+
+**ขั้น ① สุ่มโจทย์ แล้วให้โมเดลตอบโจทย์ละ G ครั้ง**
+
+```python
+words = [sampler.sample(must_have_b=(i < int(args.b_frac * args.prompts)))
+         for i in range(args.prompts)]                      # 32 โจทย์ (19 ข้อแรกบังคับมี b)
+rep = [w for w in words for _ in range(G)]                  # ทำซ้ำโจทย์ละ 16 -> 512 แถว
+seq, plen = generate(policy, rep, greedy=False, temperature=args.temp)   # สุ่มตอบ
+outs = [parse_completion(seq[i], plen[i]) for i in range(len(rep))]      # แปลงเป็นข้อความ
+```
+
+`rep` หน้าตาแบบนี้: `[gob, gob, ... (16 ครั้ง), xyz, xyz, ... (16 ครั้ง), ...]`
+
+**ขั้น ② ให้คะแนน แล้วคิด advantage แบบกลุ่ม**
+
+```python
+R = torch.tensor([reward_fn(w, o) for w, o in zip(rep, outs)])      # [512]
+Rg = R.view(args.prompts, G)                                        # [32, 16] แถวละโจทย์
+adv = ((Rg - Rg.mean(1, keepdim=True))                              # ลบค่าเฉลี่ยของแถว
+       / (Rg.std(1, keepdim=True) + 1e-4)).view(-1)                 # หาร SD ของแถว -> [512]
+```
+
+นี่คือ "G" ใน **G**RPO: แต่ละคำตอบถูกเทียบกับ **เพื่อนที่ตอบโจทย์เดียวกัน** เท่านั้น
+(`+ 1e-4` กันการหารด้วย 0 เมื่อทั้ง 16 คำตอบได้คะแนนเท่ากัน → advantage = 0 → ไม่เรียนรู้)
+
+```python
+with torch.no_grad():
+    old_logp, mask = completion_logprobs(policy, seq, plen, args.temp)  # โอกาสตอนสุ่ม (ก่อนอัปเดต)
+    ref_logp, _ = completion_logprobs(ref, seq, plen, args.temp)        # โอกาสตามโมเดลต้นฉบับ
+```
+
+**ขั้น ③ อัปเดตโมเดล (ทำ 2 รอบ)**
+
+```python
+for _ in range(args.inner):                                      # 2 รอบต่อ batch
+    logp, _, ent = completion_logprobs(policy, seq, plen, args.temp, return_entropy=True)
+    ratio = torch.exp(logp - old_logp)                           # π_ใหม่ / π_เก่า  ต่อ token
+    a = adv.unsqueeze(1)                                         # [512, 1] ใช้ advantage เดียวทั้งคำ
+    surr = torch.min(ratio * a,
+                     torch.clamp(ratio, 1 - args.clip, 1 + args.clip) * a)   # PPO clip
+    d = ref_logp - logp
+    kl = torch.exp(d) - d - 1                                    # KL แบบ k3 (≥ 0 เสมอ)
+    per_tok = -(surr - args.beta * kl + args.ent * ent)          # รวมเป็น loss ต่อ token
+    loss = ((per_tok * mask).sum(1) / mask.sum(1).clamp(min=1)).mean()   # เฉลี่ยเฉพาะส่วนคำตอบ
+    opt.zero_grad(set_to_none=True)
+    loss.backward()
+    torch.nn.utils.clip_grad_norm_(policy.parameters(), 1.0)
+    opt.step()
+```
+
+อธิบายทีละบรรทัด:
+
+| บรรทัด | ความหมาย |
+|---|---|
+| `ratio = exp(logp − old_logp)` | ตอนนี้โมเดลให้โอกาส token นี้ "กี่เท่า" ของตอนที่สุ่ม — รอบแรก = 1 พอดี |
+| `ratio * a` | ถ้า advantage บวก → อยากให้ ratio โต (เพิ่มโอกาส), ถ้าลบ → อยากให้ ratio เล็ก |
+| `clamp(ratio, 0.8, 1.2)` | **PPO clip:** ห้ามเปลี่ยนเกิน ±20% ในการอัปเดตครั้งเดียว |
+| `torch.min(…)` | เลือกค่าที่ "ระมัดระวังกว่า" ระหว่างแบบ clip กับไม่ clip |
+| `kl = e^d − d − 1` | วัดว่า policy ห่างจาก ref แค่ไหน (= 0 เมื่อเหมือนกัน, โตขึ้นเมื่อต่างกัน) |
+| `-(surr − β·kl + ent_coef·ent)` | **อยากให้** surr สูง, kl ต่ำ, entropy สูง → ใส่ลบข้างหน้าเพราะ optimizer "ลด" loss เสมอ |
+| `(per_tok * mask).sum(1) / mask.sum(1)` | เฉลี่ยเฉพาะ token ของคำตอบ (ไม่นับโจทย์/PAD) ได้ 1 ค่าต่อคำตอบ |
+| `.mean()` | เฉลี่ยทั้ง 512 คำตอบ |
+
+> 💡 **ทำไมการ "เพิ่ม ratio × advantage" ถึงทำให้โมเดลเก่งขึ้น?**
+> คำตอบ `og` (advantage +1.5) → gradient ดัน logp ของ `o`, `g`, `EOS` ให้สูงขึ้น → ครั้งหน้ามีโอกาสตอบ `og` มากขึ้น
+> คำตอบ `bog` (advantage −1.3) → gradient กด logp ของ `b` ลง → ครั้งหน้าตอบ `b` น้อยลง
+
+#### ส่วนที่ 5: บันทึกผล
+
+ทุก 25 step: วัดผลบน `eval_bomb` (ข้าม b) กับ `eval_nob` (กลับคำปกติ) แล้ว print
+ทุก 5 step: เก็บ reward เฉลี่ย, group-std, KL ลง `log`
+จบแล้ว: เซฟ `checkpoints/grpo_<tag>.pt`, `results/grpo_<tag>_metrics.json`, กราฟ `grpo_<tag>_curves.png`
+
+**วิธีอ่าน log ตอนรัน:**
+
+```
+[eval] step  200 | bomb-words exact  40.12% | b-leak 0.00% | no-b words exact 96.45% | 138.7s
+  step  200 | reward +1.078 | group-std 0.522 | rollout exact 42.0% | rollout b 1.4% | KL 1.5111
+```
+
+| ค่า | ดูอะไร |
+|---|---|
+| `bomb-words exact` | ⭐ ตัวเลขหลัก: ข้าม b ถูกเป๊ะกี่ % (greedy, ข้อสอบ) |
+| `b-leak` | ยังมี b หลุดออกมากี่ % |
+| `no-b words exact` | ยังกลับคำปกติได้ไหม (ถ้าตกมาก = ลืมของเก่า) |
+| `reward` | คะแนนเฉลี่ยของคำตอบที่สุ่ม (ควรค่อย ๆ ขึ้น) |
+| `group-std` | ⚠️ ถ้าเข้าใกล้ 0 = คำตอบในกลุ่มเหมือนกันหมด = **หยุดเรียนรู้** (entropy collapse) |
+| `KL` | ห่างจากโมเดลต้นฉบับแค่ไหน |
+
+#### command-line arguments ทั้งหมด
+
+| argument | ค่าเริ่มต้น | ความหมาย |
+|---|---|---|
+| `--reward` | `shaped` | ใช้ reward แบบไหน (`shaped` / `similarity` / `naive`) |
+| `--init` | `pretrain` | เริ่มจาก checkpoint ไหน |
+| `--ref` | (= init) | โมเดลอ้างอิงสำหรับ KL |
+| `--steps` | 400 | จำนวน step |
+| `--prompts` | 32 | โจทย์ต่อ step |
+| `--group` | 16 | G = จำนวนคำตอบต่อโจทย์ |
+| `--lr` | 5e-5 | learning rate |
+| `--beta` | 0.02 | น้ำหนัก KL (รุ่น final ใช้ 0.01) |
+| `--clip` | 0.2 | ε ของ PPO clip |
+| `--inner` | 2 | อัปเดตกี่รอบต่อ batch |
+| `--temp` | 1.0 | temperature ตอนสุ่ม |
+| `--ent` | 0.0 | น้ำหนัก entropy bonus |
+| `--b_frac` | 0.6 | สัดส่วนโจทย์ที่บังคับมี b |
+| `--tag` | (= reward) | ชื่อไฟล์ผลลัพธ์ |
+| `--threads` | 8 | จำนวน CPU thread |
+
+---
+
+### 11.8 `evaluate_all.py` — วัดผลทุกโมเดล
+
+```python
+MODELS = [("pretrain_nols.pt", "Pretrained (no label smoothing)"), ...]   # รายชื่อโมเดล
+for fn, label in MODELS:
+    if not os.path.exists(path): continue                 # ข้ามตัวที่ยังไม่ได้เทรน
+    m = load_model(path)
+    r_rev  = evaluate(m, eval_rev,  target_reverse)       # กลับคำปกติ
+    r_nob  = evaluate(m, eval_nob,  target_reverse)       # เฉพาะคำไม่มี b
+    r_bomb = evaluate(m, eval_bomb, target_skip_b)        # ข้าม b
+    r_mix  = evaluate(m, eval_rev,  target_skip_b)        # งาน Step 2 บนคำสุ่ม
+```
+
+แล้วเขียนตาราง `results/summary.md`, ข้อมูลดิบ `summary.json` และกราฟแท่ง `summary.png`
+
+---
+
+### 11.9 ลองเล่นเอง (แบบฝึกหัด) 🧪
+
+| ลองแก้ | คาดว่าจะเกิดอะไร | เรียนรู้เรื่อง |
+|---|---|---|
+| `GPTConfig(n_layer=1)` แล้วรัน Step 1 | อาจยังได้ ~100% หรือลดลงนิดหน่อย | งานง่ายใช้โมเดลเล็กได้ |
+| `--label_smoothing 0` แล้วรัน GRPO ต่อ | GRPO ไม่เรียนรู้ (0%) | exploration |
+| `--reward naive` | b หายแต่กลับคำพัง | reward hacking |
+| `--beta 0` | no-b words อาจตกมากขึ้น | หน้าที่ของ KL |
+| `--group 4` | เรียนรู้ช้าลง / ไม่เสถียร | ขนาดกลุ่มใน GRPO |
+| `--temp 2.0` | คำตอบพังเยอะ (invalid) | temperature |
+| เขียน reward ใหม่ใน `train_grpo.py` แล้วเพิ่มใน `REWARDS` | — | ลองออกแบบ reward เอง |
+
+---
+
+## 12. วิธีรันโค้ดเอง
+
+### 12.1 ไฟล์ในโปรเจกต์
 
 | ไฟล์ | ทำอะไร |
 |---|---|
@@ -525,7 +1182,7 @@ def reward_shaped(x, out):
 | `results/` | ตัวเลข (`.json`), ตาราง (`summary.md`), กราฟ (`.png`), log |
 | `presentation.md` | สไลด์ Step 3 |
 
-### 11.2 คำสั่ง (Windows PowerShell)
+### 12.2 คำสั่ง (Windows PowerShell)
 
 ```powershell
 # 0) ติดตั้ง (ครั้งแรกครั้งเดียว) — ต้องมี Python 3.10+
@@ -555,7 +1212,7 @@ python -m venv .venv
 
 ---
 
-## 12. โครงสไลด์สำหรับ Step 3
+## 13. โครงสไลด์สำหรับ Step 3
 
 ไฟล์สไลด์เต็มอยู่ที่ `presentation.md` สรุปหัวข้อตามที่โจทย์กำหนด:
 
@@ -570,7 +1227,7 @@ python -m venv .venv
 
 ---
 
-## 13. อภิธานศัพท์ (คำศัพท์ที่ควรรู้)
+## 14. อภิธานศัพท์ (คำศัพท์ที่ควรรู้)
 
 | คำ | ความหมายแบบง่าย |
 |---|---|
