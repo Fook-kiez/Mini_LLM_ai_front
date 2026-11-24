@@ -10,7 +10,9 @@
 | GRPO - shaped + entropy 0.05 | 84.1% | 98.4% | 31.7% | 0.1% | 88.3% |
 | GRPO - shaped, G=32, 2000 steps | 82.4% | 96.4% | 27.3% | 0.0% | 86.1% |
 | GRPO - shaped, G=16, 2000 steps | 83.7% | 97.9% | 38.7% | 0.0% | 90.2% |
-| GRPO - shaped, 4000 steps (FINAL) | 82.5% | 96.5% | 39.0% | 0.0% | 88.1% |
+| GRPO - shaped, 4000 steps (round 1 final) | 82.5% | 96.5% | 39.0% | 0.0% | 88.1% |
+| GRPO - token-level reward, 400 steps | 84.2% | 98.5% | 59.3% | 0.0% | 94.0% |
+| GRPO - token-level + hard-state exploration (BEST) | 85.1% | 99.6% | 96.1% | 0.0% | 99.2% |
 
 Per-length exact match on b-words (skip-b task):
 
@@ -26,4 +28,6 @@ Per-length exact match on b-words (skip-b task):
 | GRPO - shaped + entropy 0.05 | 97.5% | 51.5% | 28.5% | 17.5% | 16.0% |
 | GRPO - shaped, G=32, 2000 steps | 45.0% | 41.5% | 29.0% | 18.5% | 16.5% |
 | GRPO - shaped, G=16, 2000 steps | 97.5% | 56.5% | 35.5% | 31.5% | 19.5% |
-| GRPO - shaped, 4000 steps (FINAL) | 97.5% | 56.5% | 38.5% | 27.5% | 22.0% |
+| GRPO - shaped, 4000 steps (round 1 final) | 97.5% | 56.5% | 38.5% | 27.5% | 22.0% |
+| GRPO - token-level reward, 400 steps | 97.5% | 84.5% | 56.5% | 50.5% | 38.0% |
+| GRPO - token-level + hard-state exploration (BEST) | 97.5% | 99.5% | 100.0% | 93.0% | 91.5% |

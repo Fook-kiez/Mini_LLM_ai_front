@@ -1,0 +1,15 @@
+setting,round 1 final,round 2 (expC),round 2b FINAL (expI)
+steps (total from pretrained),"4,000 (2,000 + 2,000)",400,"1,900 (400 + 1,500)"
+prompts / step,32,128,256
+G (samples / prompt),16,16,16
+learning rate,5e-05,0.0001,0.0002
+KL weight beta,0.01,0.0,0.0
+PPO clip eps,0.2,0.2,0.2
+updates / batch,2,2,2
+sampling temperature,1.0,1.5,1.0
+prompts with 'b',0.6,0.7,0.7
+advantage,seq,token,token
+baseline,group mean/std,mixed (clamp >= 0),state
+exploration episodes,0,0,0.5
+exploration temperature,-,-,3.0
+device,cpu,cuda,cuda

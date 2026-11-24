@@ -1,0 +1,8 @@
+input,target (skip b),Pretrained (Step 1),"Round 1: shaped reward (4,000 steps)",Round 2: token-level (400 steps),Round 2 + hard-state exploration (FINAL)
+abcde,edca,edcba,edc,edca,edca
+hello,olleh,olleh,olleh,olleh,olyeh
+mhbk,khm,kbhm,khh,khm,khm
+stib,its,bits,iit,iis,its
+irbpb,pri,bpbri,prrr,prpi,pri
+bbq,q,qbb,q,q,q
+nbb,n,bbn,nn,nn,nn

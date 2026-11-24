@@ -1,0 +1,5 @@
+model,checkpoint,len 2,len 3,len 4,len 5,len 6
+Pretrained (Step 1),pretrain.pt,0.0000,0.0000,0.0000,0.0000,0.0000
+"Round 1: shaped reward (4,000 steps)",grpo_final.pt,0.9750,0.5650,0.3850,0.2750,0.2200
+Round 2: token-level (400 steps),grpo_expC.pt,0.9750,0.8450,0.5650,0.5050,0.3800
+Round 2 + hard-state exploration (FINAL),grpo_expI.pt,0.9750,0.9950,1.0000,0.9300,0.9150

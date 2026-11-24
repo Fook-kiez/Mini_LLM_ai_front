@@ -1,0 +1,5 @@
+model,checkpoint,no-b words: reverse,b-words: reverse + skip b,random words: Step 2 task,random words: plain reverse (Step 1),b-leak
+Pretrained (Step 1),pretrain.pt,1.0000,0.0000,0.8548,1.0000,1.0000
+"Round 1: shaped reward (4,000 steps)",grpo_final.pt,0.9653,0.3905,0.8807,0.8252,0.0000
+Round 2: token-level (400 steps),grpo_expC.pt,0.9853,0.5929,0.9400,0.8422,0.0000
+Round 2 + hard-state exploration (FINAL),grpo_expI.pt,0.9957,0.9607,0.9919,0.8511,0.0000

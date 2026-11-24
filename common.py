@@ -246,26 +246,29 @@ def load_model(path, device="cpu"):
 # 4) Generation (batched, prompts may have different lengths)
 # ----------------------------------------------------------------------------
 @torch.no_grad()
-def generate(model, words, greedy=True, temperature=1.0, device="cpu"):
+def generate(model, words, greedy=True, temperature=1.0, device="cpu", prefixes=None, max_new=None):
     """Returns a LongTensor [B, BLOCK_SIZE] (prompt + completion, right-padded with PAD)
     and a list with the prompt length of each row.
 
     Sequences are right-padded. Because attention is causal, padding to the RIGHT
     never influences earlier positions, so we can read the logits at each row's own
     last position.
+
+    prefixes (optional): list of strings already written after <SEP> (counted as part of
+    the prompt, so plen includes them). Used by GRPO "start-state resets".
     """
     model.eval()
     B = len(words)
     seq = torch.full((B, BLOCK_SIZE), PAD, dtype=torch.long, device=device)
     plen = []
     for i, w in enumerate(words):
-        p = prompt_ids(w)
+        p = prompt_ids(w) + (encode(prefixes[i]) if prefixes else [])
         seq[i, : len(p)] = torch.tensor(p, device=device)
         plen.append(len(p))
     cur = torch.tensor(plen, device=device)
     done = torch.zeros(B, dtype=torch.bool, device=device)
     rows = torch.arange(B, device=device)
-    for _ in range(MAX_NEW_TOKENS):
+    for _ in range(max_new or MAX_NEW_TOKENS):
         logits, _ = model(seq)
         last = logits[rows, cur - 1]                    # [B, V]
         if greedy:

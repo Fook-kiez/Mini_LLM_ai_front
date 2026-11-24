@@ -1,0 +1,20 @@
+id,round,what changed,GRPO steps,b-words skip-b exact,no-b words reverse exact
+pretrain,Step 1,"pretrained, label smoothing 0.1 (start point)","3,000",0.0000,1.0000
+pretrain_nols,Step 1,"pretrained, no label smoothing","3,000",0.0000,1.0000
+naive,R1,reward: 1 if no 'b' else 0,400,0.0869,0.3033
+similarity,R1,reward: string similarity to target,400,0.1988,0.9731
+nols,R1,"shaped reward, start from no-LS model",400,0.0000,1.0000
+shaped,R1,shaped reward (prefix + length + b penalty),600,0.3298,0.9567
+ent05,R1,shaped + entropy bonus 0.05,"1,000",0.3167,0.9844
+long_g32,R1,"shaped, G=32, lr 1e-4, beta 0.04","2,000",0.2726,0.9645
+long_lr5e-5,R1,"shaped, G=16, lr 5e-5, beta 0.01","2,000",0.3869,0.9792
+final,R1,continue long_lr5e-5 (round 1 best),"+2,000",0.3905,0.9653
+expC,R2,"token-level reward + clamped baseline, T=1.5",400,0.5929,0.9853
+expA,R2,"token-level, T=1.0 (no higher temperature)",400,0.5786,0.9679
+expB,R2,"token-level, baseline fixed at 0",400,0.4071,0.9541
+expD,R2,"continue expC, more steps (stopped)",+300,0.6131,0.9705
+expE,R2,+ start episodes mid-answer (stopped),+200,0.6024,0.9731
+expF,R2,+ temperature 3 on whole answer (stopped),+300,0.6060,0.9948
+expG,R2,+ per-state std scaling (stopped),+300,0.5881,0.9636
+expH,R2,+ negative advantages x0.1 (stopped),+300,0.6060,0.9107
+expI,R2b,continue expC + one-step exploration at hard states,"+1,500",0.9607,0.9957

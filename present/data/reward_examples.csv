@@ -1,0 +1,8 @@
+output,what happened,naive,similarity,shaped (R1),token-level (R2) per token
+edcba,wrote b,+0.00,+0.39,-0.03,+1 +1 +1 -1 0 0
+edcxa,replaced b with x,+1.00,+0.89,+0.47,+1 +1 +1 -1 0 0
+edc,stopped at b,+1.00,+0.86,+0.62,+1 +1 +1 -1
+edcc,repeated a letter,+1.00,+0.75,+0.75,+1 +1 +1 -1 0
+edcaa,too long,+1.00,+0.89,+0.68,+1 +1 +1 +1 -1 0
+edca,correct,+1.00,+2.00,+2.00,+1 +1 +1 +1 +1
+(malformed),no <EOS>,-1.00,-1.00,-1.00,malformed

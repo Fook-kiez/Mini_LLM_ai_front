@@ -1,0 +1,17 @@
+setting,value
+layers,3
+attention heads,4
+embedding size,128
+MLP hidden,512
+vocab (26 letters + 4 special),30
+context length (tokens),15
+dropout,0.0
+parameters,"600,832"
+steps,"3,000"
+batch size,256
+peak lr,0.001
+warmup / schedule,200 / cosine to 10%
+optimizer,"AdamW (0.9, 0.98)"
+weight decay,0.01
+label smoothing,0.1
+training time (CPU),105 s

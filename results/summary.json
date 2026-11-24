@@ -560,7 +560,7 @@
     ]
   },
   {
-    "model": "GRPO - shaped, 4000 steps (FINAL)",
+    "model": "GRPO - shaped, 4000 steps (round 1 final)",
     "file": "grpo_final.pt",
     "reverse_exact (Step1 task)": 0.8251851851851851,
     "no_b_words_exact": 0.9653379549393414,
@@ -575,6 +575,118 @@
       "4": 0.385,
       "5": 0.275,
       "6": 0.22
+    },
+    "examples": [
+      {
+        "input": "mb",
+        "target": "m",
+        "pred": "m",
+        "correct": true
+      },
+      {
+        "input": "bk",
+        "target": "k",
+        "pred": "k",
+        "correct": true
+      },
+      {
+        "input": "tb",
+        "target": "t",
+        "pred": "t",
+        "correct": true
+      },
+      {
+        "input": "zb",
+        "target": "z",
+        "pred": "z",
+        "correct": true
+      },
+      {
+        "input": "bj",
+        "target": "j",
+        "pred": "j",
+        "correct": true
+      },
+      {
+        "input": "fb",
+        "target": "f",
+        "pred": "f",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "model": "GRPO - token-level reward, 400 steps",
+    "file": "grpo_expC.pt",
+    "reverse_exact (Step1 task)": 0.8422222222222222,
+    "no_b_words_exact": 0.9852686308492201,
+    "b_words_skip_exact": 0.5928571428571429,
+    "b_words_char_acc": 0.7688460164344408,
+    "b_leak_rate": 0.0,
+    "invalid_rate": 0.0,
+    "step2_task_on_random_words": 0.94,
+    "b_words_per_length": {
+      "2": 0.975,
+      "3": 0.845,
+      "4": 0.565,
+      "5": 0.505,
+      "6": 0.38
+    },
+    "examples": [
+      {
+        "input": "mb",
+        "target": "m",
+        "pred": "m",
+        "correct": true
+      },
+      {
+        "input": "bk",
+        "target": "k",
+        "pred": "k",
+        "correct": true
+      },
+      {
+        "input": "tb",
+        "target": "t",
+        "pred": "t",
+        "correct": true
+      },
+      {
+        "input": "zb",
+        "target": "z",
+        "pred": "z",
+        "correct": true
+      },
+      {
+        "input": "bj",
+        "target": "j",
+        "pred": "j",
+        "correct": true
+      },
+      {
+        "input": "fb",
+        "target": "f",
+        "pred": "f",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "model": "GRPO - token-level + hard-state exploration (BEST)",
+    "file": "grpo_expI.pt",
+    "reverse_exact (Step1 task)": 0.8511111111111112,
+    "no_b_words_exact": 0.9956672443674177,
+    "b_words_skip_exact": 0.9607142857142857,
+    "b_words_char_acc": 0.9819021948402002,
+    "b_leak_rate": 0.0,
+    "invalid_rate": 0.0,
+    "step2_task_on_random_words": 0.9918518518518519,
+    "b_words_per_length": {
+      "2": 0.975,
+      "3": 0.995,
+      "4": 1.0,
+      "5": 0.93,
+      "6": 0.915
     },
     "examples": [
       {

@@ -19,7 +19,7 @@ from difflib import SequenceMatcher
 import torch
 import torch.nn.functional as F
 
-from common import (BLOCK_SIZE, EOS, CKPT_DIR, RESULTS_DIR, WordSampler, build_eval_sets,
+from common import (BLOCK_SIZE, EOS, PAD, MAX_NEW_TOKENS, full_ids, CKPT_DIR, RESULTS_DIR, WordSampler, build_eval_sets,
                     evaluate, generate, load_model, parse_completion, save_model, set_seed,
                     target_reverse, target_skip_b)
 
@@ -87,26 +87,102 @@ REWARDS = {"shaped": reward_shaped, "similarity": reward_similarity, "naive": re
 
 
 # ------------------------- GRPO helpers -------------------------
-def completion_logprobs(model, seq, plen, temperature, return_entropy=False):
+def completion_logprobs(model, seq, plen, temperature, return_entropy=False, max_new=None):
     """Log-prob of every generated token + a mask that marks completion tokens
     (from the first answer token up to and including <EOS>)."""
     logits, _ = model(seq[:, :-1])
+    if torch.is_tensor(temperature):
+        temperature = temperature.view(-1, 1, 1)          # one temperature per row
     logp_all = F.log_softmax(logits / temperature, dim=-1)
     tgt = seq[:, 1:]
     logp = logp_all.gather(-1, tgt.unsqueeze(-1)).squeeze(-1)     # [B, T-1]
     entropy = -(logp_all.exp() * logp_all).sum(-1)                 # [B, T-1]
-    B, T = tgt.shape
-    mask = torch.zeros(B, T, dtype=torch.float32, device=seq.device)
-    for i in range(B):
-        start = plen[i] - 1                    # position whose next token is the 1st answer token
-        row = seq[i, plen[i]:].tolist()
-        n = len(row)
-        if EOS in row:
-            n = row.index(EOS) + 1
-        mask[i, start: start + n] = 1.0
+    mask = completion_mask(seq, plen, max_new)
     if return_entropy:
         return logp, mask, entropy
     return logp, mask
+
+
+def completion_mask(seq, plen, max_new=None):
+    """[B, T-1] float mask over logit positions whose next token is a generated token
+    (first answer token .. <EOS> inclusive). Vectorised (no per-row GPU syncs)."""
+    B, T = seq.shape
+    pl = torch.as_tensor(plen, device=seq.device).unsqueeze(1)          # [B,1]
+    pos = torch.arange(T, device=seq.device).unsqueeze(0)               # [1,T]
+    in_comp = pos >= pl
+    is_eos = (seq == EOS) & in_comp
+    # index of first EOS in the completion, else last position generate() could write
+    first_eos = torch.where(is_eos, pos, torch.full_like(pos, T)).min(1, keepdim=True).values
+    mn = MAX_NEW_TOKENS if max_new is None else max_new.view(-1, 1)
+    last = torch.minimum(first_eos, pl + mn - 1).clamp(max=T - 1)
+    tok_mask = in_comp & (pos <= last)                                  # over seq positions
+    return tok_mask[:, 1:].float()                                      # shift: logit j -> token j+1
+
+
+def target_tensor(words, T, device):
+    """Ideal full sequence <BOS> x <SEP> skip_b(reverse(x)) <EOS>, padded to T."""
+    tg = torch.full((len(words), T), PAD, dtype=torch.long)
+    for i, w in enumerate(words):
+        ids = full_ids(w, target_skip_b(w))
+        tg[i, :len(ids)] = torch.tensor(ids)
+    return tg.to(device)
+
+
+def token_advantages(seq, plen, words, G, mask, gamma=0.0, baseline="mixed", neg_scale=1.0):
+    """Token-level GRPO advantage ("process reward" + per-state group baseline).
+
+    Per generated token k (a verifier checks it, the model never sees the label):
+        r_k = +1  if the answer so far (incl. token k) is still exactly on track
+        r_k = -1  if token k is the FIRST mistake (wrote 'b', repeated a letter, stopped early ...)
+        r_k =  0  after the first mistake (those tokens are ignored: advantage 0)
+    Return  G_k = sum_j gamma^(j-k) r_j.
+
+    Baseline: all G samples of one prompt that are still on track at position k are in
+    exactly the SAME state (same prompt + same prefix), so their mean return is an
+    unbiased value estimate for that state -> A_k = G_k - mean_group_state(G_k).
+    This is GRPO's group baseline applied per state instead of per whole sequence,
+    so the token right after a skipped 'b' gets its own credit signal.
+    """
+    B, Tm1 = mask.shape
+    tgt = target_tensor(words, seq.shape[1], seq.device)
+    pos = torch.arange(seq.shape[1], device=seq.device).unsqueeze(0)
+    pl = torch.as_tensor(plen, device=seq.device).unsqueeze(1)
+    gen = torch.cat([torch.zeros(B, 1, device=seq.device), mask], 1).bool()   # seq positions
+    correct = (seq == tgt) | ~gen | (pos < pl)          # non-generated positions count as ok
+    on_track = torch.cumprod(correct.long(), 1).bool()  # prefix up to & incl. p is correct
+    prev_ok = torch.cat([torch.ones(B, 1, dtype=torch.bool, device=seq.device), on_track[:, :-1]], 1)
+    active = gen & prev_ok                              # decision made from an on-track state
+    r = torch.where(on_track, 1.0, -1.0) * active.float()
+    ret = torch.zeros_like(r)
+    run = torch.zeros(B, device=seq.device)
+    for p in range(seq.shape[1] - 1, -1, -1):
+        run = r[:, p] + gamma * run
+        ret[:, p] = run
+    ret = ret * active.float()
+    a = active.float().view(-1, G, seq.shape[1])
+    rg = ret.view(-1, G, seq.shape[1])
+    base = (rg * a).sum(1, keepdim=True) / a.sum(1, keepdim=True).clamp(min=1)
+    if baseline == "none":
+        base = torch.zeros_like(base)
+    elif baseline in ("mixed", "mixed_std"):
+        # If EVERY sample in a state makes the same mistake, the pure group baseline gives
+        # advantage 0 and the model can never escape (the correct token has p~1e-4 and is
+        # never sampled). Clamping the baseline at 0 keeps a "push the mistake down" signal
+        # for those states while still centring states where some samples succeed.
+        base = base.clamp(min=0.0)
+    adv = (rg - base) * a
+    if baseline == "mixed_std":
+        # GRPO-style per-state scaling: a rare success (1 of 16) gets a ~4x larger push
+        n = a.sum(1, keepdim=True)
+        var = (((rg - (rg * a).sum(1, keepdim=True) / n.clamp(min=1)) ** 2) * a).sum(1, keepdim=True) / n.clamp(min=1)
+        adv = adv / var.sqrt().clamp(min=0.25)
+    # asymmetric update: at high sampling temperature most sampled tokens are random
+    # mistakes; full-strength "push down" on all of them drowns the rare successes.
+    adv = torch.where(adv < 0, adv * neg_scale, adv)
+    adv = adv.reshape(B, -1)
+    # no std-normalisation: most on-track tokens have advantage 0, so a batch std would be
+    # tiny and blow up the step size. Raw advantages are already bounded in [-2, 2].
+    return adv[:, 1:], active[:, 1:].float()            # align with logit positions
 
 
 def main():
@@ -127,11 +203,26 @@ def main():
     ap.add_argument("--ent", type=float, default=0.0, help="entropy bonus weight")
     ap.add_argument("--b_frac", type=float, default=0.6, help="fraction of prompts containing b")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--adv", default="seq", choices=["seq", "token"],
+                    help="seq = classic GRPO (one advantage per answer); "
+                         "token = per-token process reward with per-state group baseline")
+    ap.add_argument("--gamma", type=float, default=0.0, help="discount for --adv token")
+    ap.add_argument("--baseline", default="mixed", choices=["state", "mixed", "mixed_std", "none"],
+                    help="baseline for --adv token (see token_advantages)")
+    ap.add_argument("--neg_scale", type=float, default=1.0,
+                    help="multiply negative token advantages by this (asymmetric PG)")
+    ap.add_argument("--explore_frac", type=float, default=0.0,
+                    help="fraction of prompts used as one-step exploration episodes from hard states")
+    ap.add_argument("--explore_temp", type=float, default=3.0)
+    ap.add_argument("--reset_frac", type=float, default=0.0,
+                    help="fraction of prompts whose episode starts from a random correct prefix")
+    ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
+    ap.add_argument("--eval_every", type=int, default=25)
     args = ap.parse_args()
 
     set_seed(args.seed)
     torch.set_num_threads(args.threads)
-    device = "cpu"
+    device = args.device
     reward_fn = REWARDS[args.reward]
 
     eval_rev, eval_bomb = build_eval_sets()
@@ -155,14 +246,21 @@ def main():
     log = {k: [] for k in ["step", "reward", "reward_std", "exact_rollout", "b_rate_rollout",
                            "kl", "eval_step", "eval_bomb_exact", "eval_nob_exact", "eval_b_leak"]}
     t0 = time.time()
+    best_score = -1.0
     G = args.group
     for step in range(args.steps + 1):
-        if step % 25 == 0:
+        if step % args.eval_every == 0:
             rb, rn = run_eval()
             log["eval_step"].append(step)
             log["eval_bomb_exact"].append(rb["exact_match"])
             log["eval_nob_exact"].append(rn["exact_match"])
             log["eval_b_leak"].append(rb["b_leak_rate"])
+            # RL curves swing, so keep the best checkpoint seen at eval time
+            score = rb["exact_match"] + rn["exact_match"]
+            if score > best_score:
+                best_score = score
+                save_model(policy, os.path.join(CKPT_DIR, f"grpo_{args.tag or args.reward}_best.pt"),
+                           extra={**vars(args), "best_step": step})
             print(f"[eval] step {step:4d} | bomb-words exact {rb['exact_match']*100:6.2f}% "
                   f"| b-leak {rb['b_leak_rate']*100:6.2f}% | no-b words exact {rn['exact_match']*100:6.2f}% "
                   f"| {time.time()-t0:5.1f}s")
@@ -172,25 +270,82 @@ def main():
         # ---- 1) sample a batch of prompts, each repeated G times ----
         words = [sampler.sample(must_have_b=(i < int(args.b_frac * args.prompts)))
                  for i in range(args.prompts)]
-        rep = [w for w in words for _ in range(G)]
-        seq, plen = generate(policy, rep, greedy=False, temperature=args.temp, device=device)
-        outs = [parse_completion(seq[i], plen[i]) for i in range(len(rep))]
+        temps, max_new = args.temp, None
+        if args.explore_frac > 0:
+            # Two kinds of episodes in one batch:
+            #  * normal: whole answer sampled at --temp (on-policy, the real task)
+            #  * explore: the environment starts at a hard state (a correct partial answer
+            #    that already passed a 'b'); the policy makes ONE decision, sampled at the
+            #    higher --explore_temp, and gets its token reward immediately.
+            #    Easy states stay quiet (all samples right -> advantage 0) while the rare
+            #    correct guesses at hard states get a clean, undiluted signal.
+            n_exp = int(args.explore_frac * len(words))
+            exp_words, norm_words = words[:n_exp], words[n_exp:]
+            words = norm_words + exp_words
+            pref = [""] * (len(norm_words) * G)
+            for w in exp_words:
+                t, rev = target_skip_b(w), w[::-1]
+                if "b" in rev:
+                    k0 = len(rev[:rev.index("b")])          # answer chars written before 1st b
+                    k = sampler.rng.randint(k0, len(t))     # any state after the skip
+                else:
+                    k = sampler.rng.randint(0, len(t))
+                pref += [t[:k]] * G
+            rep = [w for w in words for _ in range(G)]
+            nN = len(norm_words) * G
+            seqN, plN = generate(policy, rep[:nN], greedy=False, temperature=args.temp, device=device)
+            seqE, plE = generate(policy, rep[nN:], greedy=False, temperature=args.explore_temp,
+                                 device=device, prefixes=pref[nN:], max_new=1)
+            seq, plen = torch.cat([seqN, seqE]), plN + plE
+            temps = torch.tensor([args.temp] * nN + [args.explore_temp] * (len(rep) - nN), device=device)
+            max_new = torch.tensor([MAX_NEW_TOKENS] * nN + [1] * (len(rep) - nN), device=device)
+            outs = [parse_completion(seq[i], plen[i]) for i in range(nN)] + [None] * (len(rep) - nN)
+        else:
+         rep = [w for w in words for _ in range(G)]
+         # start-state resets: some episodes start part-way through a correct answer
+         # (like "reverse curriculum"), so the hard states right after a skipped 'b' are
+         # visited often. Only tokens the policy generates itself are trained on.
+         pref = None
+         if args.reset_frac > 0:
+             pref = []
+             for w in words:
+                 t = target_skip_b(w)
+                 k = 0
+                 if sampler.rng.random() < args.reset_frac:
+                     # candidate start points: right after a skipped 'b' (the hard states),
+                     # else any point inside the answer
+                     rev = w[::-1]
+                     hard = sorted({len(rev[:i].replace("b", "")) for i in range(1, len(rev))
+                                    if rev[i - 1] == "b"} - {0})
+                     hard = [h for h in hard if h < len(t)] or list(range(1, len(t)))
+                     if hard:
+                         k = sampler.rng.choice(hard)
+                 pref += [t[:k]] * G
+         seq, plen = generate(policy, rep, greedy=False, temperature=args.temp, device=device,
+                              prefixes=pref)
+         outs = [parse_completion(seq[i], plen[i]) for i in range(len(rep))]
+         if pref:
+             outs = [None if o is None else p + o for p, o in zip(pref, outs)]
 
         # ---- 2) rewards and group-relative advantages ----
         R = torch.tensor([reward_fn(w, o) for w, o in zip(rep, outs)], dtype=torch.float32)
         Rg = R.view(args.prompts, G)
         adv = ((Rg - Rg.mean(1, keepdim=True)) / (Rg.std(1, keepdim=True) + 1e-4)).view(-1)
+        adv = adv.to(device)
 
         with torch.no_grad():
-            old_logp, mask = completion_logprobs(policy, seq, plen, args.temp)
-            ref_logp, _ = completion_logprobs(ref, seq, plen, args.temp)
+            old_logp, mask = completion_logprobs(policy, seq, plen, temps, max_new=max_new)
+            ref_logp, _ = completion_logprobs(ref, seq, plen, temps, max_new=max_new)
+            if args.adv == "token":
+                tok_adv, _ = token_advantages(seq, plen, rep, G, mask, args.gamma, args.baseline, args.neg_scale)
 
         # ---- 3) clipped policy-gradient update (PPO-style) + KL to reference ----
         policy.train()
         for _ in range(args.inner):
-            logp, _, ent = completion_logprobs(policy, seq, plen, args.temp, return_entropy=True)
+            logp, _, ent = completion_logprobs(policy, seq, plen, temps, return_entropy=True,
+                                               max_new=max_new)
             ratio = torch.exp(logp - old_logp)
-            a = adv.unsqueeze(1)
+            a = tok_adv if args.adv == "token" else adv.unsqueeze(1)
             surr = torch.min(ratio * a, torch.clamp(ratio, 1 - args.clip, 1 + args.clip) * a)
             # k3 estimator of KL(policy || ref), always >= 0
             d = ref_logp - logp

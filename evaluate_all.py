@@ -24,7 +24,9 @@ MODELS = [  # (checkpoint file, label)
     ("grpo_ent05.pt", "GRPO - shaped + entropy 0.05"),
     ("grpo_long_g32.pt", "GRPO - shaped, G=32, 2000 steps"),
     ("grpo_long_lr5e-5.pt", "GRPO - shaped, G=16, 2000 steps"),
-    ("grpo_final.pt", "GRPO - shaped, 4000 steps (FINAL)"),
+    ("grpo_final.pt", "GRPO - shaped, 4000 steps (round 1 final)"),
+    ("grpo_expC.pt", "GRPO - token-level reward, 400 steps"),
+    ("grpo_expI.pt", "GRPO - token-level + hard-state exploration (BEST)"),
 ]
 
 
